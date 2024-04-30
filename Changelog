@@ -1,0 +1,404 @@
+--------------------------------------------------------------------
+1.2.16
+
+  New API:
+  	- IvyClient.getRegexps  no longer returns an Enumeration, but a
+	Collection
+  Internals:
+  	- switched to a lot of synchronized connections, in order to avoid
+	concurrent modifications Exceptions I was unable to prevent so far
+	- switched to an Enum for protocol numbers. Not needed really, but
+	more java-like, and it provides better error checking.
+	- externalized the Domain inner class from Ivy, to make the class
+	source code more readable.
+  Documentation:
+  	- clean up of javadoc
+
+--------------------------------------------------------------------
+1.2.15
+
+  Internals:
+  	- sets the default buffersize to 4096 bytes. This can be adjusted
+	through the use of the IVY_BUFFERSIZE jvm property (java
+	-DIVY_BUFFERSIZE=200 , e.g. ) This is intended to be similar to the
+	ivy C implementation, and *should* fix the buffering issues of
+	applications requiring a lot of small data exchanges (e.g:
+	transmitting mouse mouve at a high rate).
+
+--------------------------------------------------------------------
+1.2.14
+
+   New API:
+     	- added sypport to the Swing Dispatch Thread in the bindAsyncMsg api.
+	this breaks the former API. Use BindType.SWING as the latter argument.
+	- severe problems throws RuntimeException instead of System.exit(),
+	allows code reuse.
+	- many methods now are protected, with accessors
+	- removed unread fields (Ivy.domainaddr, e.g.)
+	- ready message is set to appName + " READY" if null has been
+	provided, like in the C# api
+	- lowercase CheckRegexp to checkRegexp (bad practice, thanks to
+	FindBugs).
+   Doc:
+ 	- javadoc updated (a bit)
+   	- removed protected methods from javadoc
+ 	switch to apache fop + docbook for documentation translation
+   Internals:
+
+	- added a lock mechanism to be sure that once a connexion
+	has been initiated, the ready message will be sent before
+	stopping the bus now: Ivy b = new Ivy(...); b.sendMsg("coucou");
+	b.stop(); should send messages (at least the ready message)
+	if there is a connexion attempt made before b.stop() is
+	effective. To be sure, there is a 200ms delay before b.stop()
+	can be effective (the Threads stopped, the sockets closed)
+	- IMPORTANT ! switch from gnu regexp (deprecated) to the
+	built in java
+	regexp.
+   	- IMPORTANT ! Reintroduced a mechanism to allow the drop of a double
+	connexion attempt.
+	- use new synchronization scheme with locks (app socket, structures)
+	- add generic types to declarations, the code now won't ompile on java
+	prior to the 1.5 platform
+ 	- fixed a potential null pointer dereference on quit (thanks to
+	findBugs)
+ 	- remove the Thread.start() from the constructor, to avoid mulithread
+	issues. see
+	http://findbugs.sourceforge.net/bugDescriptions.html#SC_START_IN_CTOR.
+ 	now ,we have to call IvyClient.start() after it has been created
+ 	- IvyWatcher tries to fix a lock on accept() by becoming a Thread
+	instead of runnalbe (see tests/test2).
+   Internal performance issus
+	- use of stringbuffers to concatenate strings, instead of using +,
+	which could lead to a quadractic cost in the number of iteraction (the
+	growing string was recopied in each iteration).
+ 	- when possible, move the regexp Pattern.compile in static areas, to
+	avoid multiple calls.
+     	- recopy the filter String[] in setfilter, to avoid exposing internal
+	representation (unsafe operation).
+ 	- in many areas, e.g. Hashtable keys, use autoboxing for the creation
+	of Integer (instead of new Integer(int). This alows caching, avoids
+	object allocation, and the *  code will be faster.
+
+ 
+--------------------------------------------------------------------
+1.2.13
+
+  mise en place de TCP_NO_DELAY, pour desactiver l'algorithme de Naggle
+  adds try catch blocks for RE constructors ( new Jakarta Regexp ? )
+  updates of documentation ( jafter, sgml file )
+
+--------------------------------------------------------------------
+1.2.12
+
+--------------------------------------------------------------------
+1.2.10 et 11
+
+  documentation updated
+  bug fix: jafter script
+  added jdaemon script
+
+--------------------------------------------------------------------
+1.2.9
+
+  bug remaining
+    - the overhead is quite important on a loaded setup
+  bugfixes
+    - unexpected disconnections after the broadcast
+  new features
+    - added the unique token in the UDP broadcast
+    - Ivy.setFilter() aka message classes, reduces the number of regexp
+    matching, improves performance especially when there are *many* clients
+    and *many* regexps, most of them ^bounded . See doc for details
+    - java -DIVYRANGE=4000-5000 allows the choice of service ports within a
+    specific range, for instance on firewall configurations.
+    - modification of the IDP broadcast ( see mailing list for details )
+    - .time and .bound commands in jprobe
+
+--------------------------------------------------------------------
+1.2.8
+
+  bug remaining
+    - Kaffe + Gcj -> app.close() hangs. I've got to investigate further
+
+  documentation
+    - typos
+    - added description of new functions
+
+  bugfixes
+    - fixed the "start stop start stop" bug reported by Francis Jambon (
+    thanks alot, Francis ! )
+    - validates against the 1.4 jakarta regexp library.
+    - IvyWatcher had a static structures leading to a nasty bug when several
+    Ivy Agents were in the same JVM.
+
+  test suite
+    - added the test directory, in addition to the examples
+    - now runs with kaffe ( not sure of Why ... )
+    - it compiles and runs fine with gcj on Mandrake 10.1, but the tests fails
+
+  new features
+    - Ivy.getWBUId() returns a "wanna be unique Id", quite useful when
+    performing queries. It looks like IDTest0:1105029280616:1005891134.
+    - Ivy.getDomainArgs(String,String[]) is a cheap and handy way of finding out
+    the domain, based on the DEFAULT_DOMAIN, then on the IVYBUS property, then on
+    the -b domain command line argument. Be sure to use it !
+    - added the After tool
+    - Probe, After and IvyDaemon going to tool
+    - fixed the jprobe shell script to honor $IVYBUS environment variable
+
+--------------------------------------------------------------------
+1.2.7
+
+  bugfixes
+    - no more the infamous unBindMsg() reported by Matthieu
+    - *complex* algorithm to disallow multiple instances of the same agent
+      when launched with multiple broadcast addresses, some of them being
+      received twice by a remote agent X, X trying to connect twice ...
+      It should fix both Francis's WiFi bugreport, and Jean-Paul Stress' bug
+
+  new features
+    - Probe allows .where  .dieall-yes-i-am-sure .bound and .bound CLIENT
+
+  code cleanup
+    - minor fixes for acecssing static final values
+
+--------------------------------------------------------------------
+1.2.6
+
+  documentation
+    - the manual has been heavily updated, and C++ has been left out.
+
+  bugfixes
+    - major cleanup to handle simultaneous connections, e.g., between two
+      busses  within the same process ( AsyncAPI test is very stressful )
+      I made an assymetric processing to elect the client that should
+      disconnect based on the socket ports ... might work...
+    - jakarta regexp are not meant to be threadsafe, so for match() and
+      compile() must be enclaused in a synchronized block
+    - now sends back an error message when an incorrect regexp is sent
+      the message is supposed to be readable
+    - IvyWatcher now uses a new buffer for each Datagram received, to prevent an old bug
+
+  new features
+    - added serial numbers for traceDebug
+    - Ivy.waitForMsg(regexp,timeout) and Ivy.waitForClient(name,timeout) make
+      the synchronization with other Ivy agents easier. Wait "forever" if
+      timeout is null.
+    - IvyClient now sends back an error message when an incorrect regexp is sent
+      the message is supposed to be readable
+    - uses apache jakarta-regexp instead of gnu-regexp ( see
+      http://jakarta.apache.org/regexp/ ), we gain a compatibility with Perl
+      and the new ivy-c 3.4.6 :)
+    - no more java ping in Probe ...
+
+  API changes
+    - Ivy changed changed the semantic of -b a,b:port,c:otherport if no port is
+      specified for a, it take the port from the next one. If none is
+      specified, it takes DEFAULT_PORT
+    - no more asynchronous sending of message ( async bind is ok though )
+      because the tests are sooooo unsuccessful
+    - IvyWatcher's getDomain now sends IvyException for malformed broadcast addresses
+
+--------------------------------------------------------------------
+1.2.5
+
+  no more java ping ... It was considered useless
+
+  new features
+    - Ivy protectNewLines to add encoding end decoding of \n within messages
+
+--------------------------------------------------------------------
+1.2.4
+
+  bugfixes
+    - resists when a non Ivy Agent broadcasts on our address
+    - invokes disconnect() on a normal IvyClient end of run()
+    - bus.start(null) now *really* starts on IVYBUS property or 127:2010 if the
+      property is not set
+    - bugfix J007 : breaks connexions with remote clients using a faulty
+      protocol, ignore subscriptions to faulty regexps.
+    - bugfix J006 : invokes the applicationListeners's disconnect method at the
+      end of the run() loop
+    - the IvyWatcher accepts connexions from remote hosts with the same port
+      number. Closes a possible bug, yet to check thoroughfully...
+    - bugfix J005 : the IvyWatcher's loop doesn't break on faulty broadcasts,
+      belonging to  non ivy application, e.g.
+    - major rewrite of the internals of the Ivy class structure
+
+  new features
+    - added a sendToSelf(boolean) method in the Ivy class to allow the
+      sendMsg() to trigger our own  callbacks. Default is false.
+
+  API Changes (WARNING, you might have to recompile you applications)
+    - changed the API for Ivy.sendMsg and IvyClient.sendDirectMsg, both function
+      can now raise an IvyException if the message contains \n or \0x3
+    - changed the API for IvyApplicationListener ( die now requires a String
+	argument ).
+    - changed the API for Ivy.bindMsg(). It now raises an IvyException if the
+      regexp was not compiled successfully (e.g.: "(.*"). 
+    - added an IvyBindListener and Ivy.addBindListener, Ivy.removeBindListener
+      order to hook callbacks upon reception of bind requests. It is now
+      possible to write a decent ivy monitor program. JProbe has been rewritten
+      this way and now displays the subscriptions in real time, not only at
+      startup ( should I file a bugreport against ivy-c ? )
+    - Probe can send messages to itself, with the -s command line switch
+
+--------------------------------------------------------------------
+1.2.3
+
+  new features
+    - IvyClient now implements the directMessage function of the Ivy Protocol.
+    - Probe now allows users to send a direct message with the ".direct" command
+    - the environment variable IVYBUS is propagated to the children
+  doc
+    - now includes a simple documentation for IvyDaemon (sgml and readme)
+    - README rewritten
+  tests
+    - I added a regression test to check the API ( java TestApi in the tests
+    directory )
+    - I added the early disconnexion test ( probe < /dev/null )
+    - handles the different JVMs more cleanly in the makefiles
+    - testbenches OK for linux jdk from 1.1 to 1.4
+  bugfixes
+    - the datagram sender is encapsulated within its own thread. Closes
+      another bug.
+    - IvyClient doesn't loop any more in certain conditions of remote
+    disconnexion this closes the new bugreport jan/2002
+    - early disconnexion is now possible ( java fr.dgac.ivy.Probe < /dev/null), 
+    - handles the InterruptedIOException happening on certain thread
+      conditions in jdk1.1 and jdk1.2. Threads and multiple VMs is a very
+      complex mix.
+  known bugs
+    - there is an Interrupt on Blackdown linux leading to an innocuous error
+      message. I will investigate later ... It is OK on Solaris jvm 1.1.7A.
+    - in Linux jdk1.2.2, a SIGSEGV from time to time.
+
+------------------------------------------------------------------------------
+1.2.2
+
+  bugfix
+    IvyClient.java didn't handle the readline()=null correctly. Thus, the
+    thread kept on eating CPU when a remote client left the bus.
+    This closes Damien Figarol bugreport dec/2002
+  bugfix
+    The ivy java library wasn't supported on 1.1.x platforms, because of
+    missing methods ( java.util.Vector.add(Object) and
+    System.setProperty(String,String) ). I switched back to the old API.
+    This closes Philippe Truillet bugreport dec/2002.
+  cleanup
+    examples have been a bit rewritten
+
+------------------------------------------------------------------------------
+1.2.1
+
+  bugfix
+    Ivy.java Ivy.start(null) now starts on DEFAULT_DOMAIN (Alexandre Lemort),
+      the new getDomains(String) outputs the list of domains
+    IvyWatcher now empties the datagram buffer with 0x10, thus fixing a nasty
+      bug that involved a java client on  windows XP
+
+  Probe
+    now displays the real address of the starting domain
+    now has a .bind and .unbind commands
+
+------------------------------------------------------------------------------
+1.2.0
+
+ bugfix:
+   IvyClient if a remote client disconnect brutally ( broken pipe ), the BufferedReader
+   takes time to propagate the IOException. It means we are not aware of the
+   problem before 2 or 3 messages ( Alexandre Lemort )
+   there is a fix in IvyClient, but this is part of the TCP protocol. I will
+   receive the timeout when I try to write on the client. To circumvent this, I
+   have implemented an extention in the Ivy protocol with 2 new messages, Ping
+   and Pong. This is Ivy-java only, and and experimental feature.
+
+ Probe
+   Probe can now send empty strings on keyboard input
+   rewritten with a looping thread on stdin to allow a cleaner exit on die
+     message : not very good
+   processes .help, .die , .quit and .bye commands
+   it is possible to rename the JPROBE on the bus with the -n switch, it can
+     circumvent name collisions during tests
+     e.g: java fr.dgac.ivy.Probe -n JPROBE2
+
+ Ivy
+   setSoTimeout is back on the server socket
+   added a regression test main()
+   clients is now a Hashtable. the deletion now works better
+   getIvyClientsByName allows the research of IvyClient by name
+   getDomain doesnt throw IvyException anymore
+   removed the close() disconnect(IvyClient c). Fixes a big badaboum bug
+   getDomain becomes public
+   adding the sendToSelf feature
+   fixed the printStackTrace upon closing of the ServerSocket after a close()
+
+ IvyException changed default access constructor to public access
+
+ IvyApplicationAdapter missed an id in the parameters
+
+ IvyClient
+   sendDie() methode goes public
+   sendBuffer update with silent error on a broken pipe, unless IVY_DEBUG is set
+   the IvyClient gets removed from the list of clients if there is a broken pipe.
+   Another bug fixed !
+   implements ping and pong protocol
+   appName visibility changed from private to protected
+
+ IvyDaemon is granted a public access on its constructor
+
+------------------------------------------------------------------------------
+1.0.11 mer jun  5 11:33:16 CEST 2002
+
+ Just a debian package change. No java modification per se.
+
+------------------------------------------------------------------------------
+1.0.10 mar jun  4 19:00:32 CEST 2002
+
+TestIvy:
+  System.exit on bus die
+
+IvyWatcher
+  isInDomain() is wrong  in multicast. I've removed it -> TO FIX
+  there was a remanence effect in the datagrampacket buffer. I clean it up after each message
+  cleaned up the getDomain() and getPort() code 
+  I allow multiple domains
+  I Removed the CPU eating loop on soTimeOut, with a vector of broadcast listeners
+
+Probe
+  System.exit upon die message
+
+jar file:
+  added gnu/regexp and gnu/getopt class files withing the jar file
+
+------------------------------------------------------------------------------
+1.0.8
+
+  Fixed a bug in inserted in 1.0.7, added the Counter program,
+  useful if you want to have an inexact idea of the number of messages
+  circulating on the bus itself.
+
+------------------------------------------------------------------------------
+1.0.7
+
+  Fixed a bug in Ivy.java and IvyClient.java, causing the
+  problematic 'a(.*) (.*)' matching 'a 2' loosing the first empty matches.
+  Beware, this has a cost on effectiveness, but, hey, Ivy-java is not
+  optimized at all
+
+------------------------------------------------------------------------------
+1.0.6
+
+  Fixed a bug in fr.dgac.ivy.Probe, which didn't use the IVYBUS
+  property.
+
+------------------------------------------------------------------------------
+1.0.5
+
+  Multicast support
+
+------------------------------------------------------------------------------
+
+  epoch
+

@@ -1,0 +1,49 @@
+#!/usr/bin/make -f
+# Re Written by Yannick Jestin
+# Made with the aid of debmake, by Christoph Lameter,
+# based on the sample debian/rules file for GNU hello by Ian Jackson.
+
+include java.mk
+
+clean:
+	dh_testdir
+	dh_testroot
+	rm -f build-stamp
+	$(MAKE) clean
+	dh_clean
+
+build: build-stamp
+build-stamp:
+	dh_testdir
+	$(MAKE)
+	touch build-stamp
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+	dh_installdirs
+	$(MAKE) dist
+	#$(MAKE) docs
+	$(MAKE) install DESTDIR=$(CURDIR)/debian/tmp
+
+# Build architecture-independent files here.
+binary-indep: build install
+	dh_testdir
+	dh_testroot
+	dh_installdocs README
+	dh_installexamples examples/*.java examples/*.xml examples/*txt
+	dh_installchangelogs Changelog
+	dh_compress	
+	dh_link
+	dh_installdeb
+	dh_gencontrol
+	dh_fixperms
+	dh_md5sums
+	dh_builddeb
+
+# Build architecture-dependent files here.
+binary-arch: build install
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install

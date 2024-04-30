@@ -1,0 +1,372 @@
+libivy-java (1.2.17) unstable; urgency=low
+  * debian wheezy : modifications in Makefile,src/Makefile, java.mk, debian/control
+
+ -- JP Imbert <jean-paul.imbert@enac.fr>  Tue, 02 Oct 2012 16:15:21 +0200
+
+
+libivy-java (1.2.16) unstable; urgency=low
+  * New API:
+        - IvyClient.getRegexps  no longer returns an Enumeration, but a
+        Collection
+  * Internals:
+        - switched to a lot of synchronized connections, in order to avoid
+        concurrent modifications Exceptions I was unable to prevent so far
+
+ -- Yannick Jestin <yannick.jestin@enac.fr>  Fri, 27 Apr 2012 10:47:21 +0200
+
+libivy-java (1.2.15) unstable; urgency=low
+  * Internals:
+        - sets the default buffersize to 4096 bytes. This can be adjusted
+        through the use of the IVY_BUFFERSIZE jvm property (java
+        -DIVY_BUFFERSIZE=200 , e.g. ) This is intended to be similar to the
+        ivy C implementation, and *should* fix the buffering issues of
+        applications requiring a lot of small data exchanges (e.g:
+        transmitting mouse mouve at a high rate).
+   * New API:
+        - added sypport to the Swing Dispatch Thread in the bindAsyncMsg api.
+        this breaks the former API. Use BindType.SWING as the latter argument.
+        - severe problems throws RuntimeException instead of System.exit(),
+        allows code reuse.
+        - many methods now are protected, with accessors
+        - removed unread fields (Ivy.domainaddr, e.g.)
+        - ready message is set to appName + " READY" if null has been
+        provided, like in the C# api
+        - lowercase CheckRegexp to checkRegexp (bad practice, thanks to
+        FindBugs).
+   * Doc:
+        - javadoc updated (a bit)
+        - removed protected methods from javadoc
+        switch to apache fop + docbook for documentation translation
+   * Internals:
+        - added a lock mechanism to be sure that once a connexion
+        has been initiated, the ready message will be sent before
+        stopping the bus now: Ivy b = new Ivy(...); b.sendMsg("coucou");
+        b.stop(); should send messages (at least the ready message)
+        if there is a connexion attempt made before b.stop() is
+        effective. To be sure, there is a 200ms delay before b.stop()
+        can be effective (the Threads stopped, the sockets closed)
+        - IMPORTANT ! switch from gnu regexp (deprecated) to the
+        built in java
+        regexp.
+        - IMPORTANT ! Reintroduced a mechanism to allow the drop of a double
+        connexion attempt.
+        - use new synchronization scheme with locks (app socket, structures)
+        - add generic types to declarations, the code now won't ompile on java
+        prior to the 1.5 platform
+        - fixed a potential null pointer dereference on quit (thanks to
+        findBugs)
+        - remove the Thread.start() from the constructor, to avoid mulithread
+        issues. see
+        http://findbugs.sourceforge.net/bugDescriptions.html#SC_START_IN_CTOR.
+        now ,we have to call IvyClient.start() after it has been created
+        - IvyWatcher tries to fix a lock on accept() by becoming a Thread
+        instead of runnalbe (see tests/test2).
+   * Internal performance issus
+        - use of stringbuffers to concatenate strings, instead of using +,
+        which could lead to a quadractic cost in the number of iteraction (the
+        growing string was recopied in each iteration).
+        - when possible, move the regexp Pattern.compile in static areas, to
+        avoid multiple calls.
+        - recopy the filter String[] in setfilter, to avoid exposing internal
+        representation (unsafe operation).
+        - in many areas, e.g. Hashtable keys, use autoboxing for the creation
+        of Integer (instead of new Integer(int). This alows caching, avoids
+        object allocation, and the *  code will be faster.
+
+ -- Yannick Jestin <yannick.jestin@enac.fr>  Wed, 11 Apr 2012 18:10:21 +0200
+
+libivy-java (1.2.13) unstable; urgency=low
+
+  * disables the Nagle's socket algorithm ( TCP_NO_DELAY = 1 )
+  * adds try catch blocks for RE constructors ( new Jakarta Regexp ? )
+  * updates of documentation ( jafter, sgml file )
+
+ -- Yannick Jestin <yannick.jestin@enac.fr>  Wed, 25 Jul 2009 16:51:21 +0100
+
+libivy-java (1.2.12-2) unstable; urgency=low
+
+  * etch fixes
+  * NEW BUG identified and not solved: multicast rendez vous is broken
+
+ -- Yannick Jestin <yannick.jestin@enac.fr>  Wed, 17 Jan 2007 16:51:21 +0100
+
+libivy-java (1.2.12) unstable; urgency=low
+
+  * (re)introducing Ping and Pong in the protocol and in IvyClient api
+
+ -- Yannick Jestin <yannick.jestin@enac.fr>  Mon, 24 Jul 2006 15:32:34 +0200
+
+libivy-java (1.2.11) unstable; urgency=low
+
+  * major documentation update ( programmers's guide )
+  * debian packaging system modified to use dhelper
+  * added jafter and jdaemon in the shell scripts
+  * added the ID in the UDP broadcast
+
+ -- Yannick Jestin <yannick.jestin@enac.fr>  Thu, 20 Jul 2006 14:48:00 +0200
+
+libivy-java (1.2.10) unstable; urgency=low
+
+  * modified the domain parsing to allow -b :3110 e.g. , it is still a bug ... 
+
+ -- Yannick Jestin <yannick.jestin@enac.fr>  Tue, 18 Jul 2006 18:49:19 +0200
+
+libivy-java (1.2.9) unstable; urgency=low
+
+  bug remaining
+    - the overhead is quite important on a loaded setup
+  bugfixes
+    - unexpected disconnections after the broadcast
+  new features
+    - Ivy.setFilter() aka message classes, reduces the number of regexp
+    matching, improves performance especially when there are *many* clients
+    and *many* regexps, most of them ^bounded . See doc for details
+    - java -DIVYRANGE=4000-5000 allows the choice of service ports within a
+    specific range, for instance on firewall configurations.
+    - modification of the IDP broadcast ( see mailing list for details )
+    - .time and .bound commands in jprobe
+
+ -- Yannick Jestin <jestin@cena.fr>  Thu, 22 Nov 2005 23:09:00 +0100
+
+libivy-java (1.2.8) unstable; urgency=low
+
+  bugfixes
+    - fixed the "start stop start stop" bug reported by Francis Jambon (
+    thanks alot, Francis ! )
+    - validates against the 1.4 jakarta regexp library.
+    - IvyWatcher had a static structures leading to a nasty bug when several
+    Ivy Agents were in the same JVM.
+
+  new features
+    - Ivy.getWBUId() returns a "wanna be unique Id", quite useful when
+    performing queries. It looks like IDTest0:1105029280616:1005891134.
+    - Ivy.getDomainArgs(String,String[]) is a cheap and handy way of finding out
+    the domain, based on the DEFAULT_DOMAIN, then on the IVYBUS property, then on
+    the -b domain command line argument. Be sure to use it !
+    - added the After tool
+    - Probe, After and IvyDaemon going to tool
+    - fixed the jprobe shell script to honor $IVYBUS environment variable
+
+
+ -- Yannick Jestin <jestin@cena.fr>  Thu, 22 Nov 2005 23:09:00 +0100
+
+libivy-java (1.2.7) unstable; urgency=low
+
+  bugfixes
+    - no more the infamous unBindMsg() reported by Matthieu
+    - *complex* algorithm to disallow multiple instances of the same agent
+      when launched with multiple broadcast addresses, some of them being
+      received twice by a remote agent X, X trying to connect twice ...
+      It should fix both Francis's WiFi bugreport, and Jean-Paul Stress' bug
+
+  new features
+    - Probe allows .where  .dieall-yes-i-am-sure .bound and .bound CLIENT
+
+  code cleanup
+    - minor fixes for acecssing static final values
+
+ -- Yannick Jestin <jestin@cena.fr>  Thu, 23 Dec 2004 17:21:00 +0100
+
+libivy-java (1.2.6) unstable; urgency=low
+
+  bugfixes
+    - major cleanup to handle simultaneous connections, e.g., between two
+      busses  within the same process ( AsyncAPI test is very stressful )
+      I made an assymetric processing to elect the client that should
+      disconnect based on the socket ports ... might work...
+    - jakarta regexp are not meant to be threadsafe, so for match() and
+      compile() must be enclaused in a synchronized block
+    - now sends back an error message when an incorrect regexp is sent
+      the message is supposed to be readable
+    - IvyWatcher now uses a new buffer for each Datagram received, to prevent an old bug
+
+  debian package
+    - the package name goes to libivy-java, 
+    - examples have been added in the documentation and corrected to honor the
+      new lib
+
+  documentation
+    - the manual has been heavily updated, and C++ has been left out.
+
+  new features
+    - Ivy.waitForMsg(regexp,timeout) and Ivy.waitForClient(name,timeout) make
+      the synchronization with other Ivy agents easier. Wait "forever" if
+      timeout is null.
+    - use Ivy.protectNewLine(true) to ensure encoding and decoding of newline
+      as 0x1A. As the encoding and decoding cost a little more CPU and is not
+      yet standardized in the Ivy protocol, use it at your own risk.
+    - IvyClient now sends back an error message when an incorrect regexp is sent
+      the message is supposed to be readable
+    - uses apache jakarta-regexp instead of gnu-regexp ( see
+      http://jakarta.apache.org/regexp/ ), we gain a compatibility with Perl
+      and the new ivy-c 3.4.6 :)
+    - no more java ping in Probe ...
+    - use bindAsyncMsg(regexp) to perform each regexp in a new Thread. This
+      can avoid hangups when you have lengthy callbacks ( calculation, etc ).
+      There is no asynchronous sending of message because the tests are sooooo
+      unsuccessful
+
+  API changes
+    - Ivy changed changed the semantic of -b a,b:port,c:otherport if no port is
+      specified for a, it take the port from the next one. If none is
+      specified, it takes DEFAULT_PORT
+    - IvyWatcher's getDomain now sends IvyException for malformed broadcast addresses
+
+ -- Yannick Jestin <jestin@cena.fr>  Tue, 29 Jul 2004 19:28:00 +0100
+
+ivy-java (1.2.4) unstable; urgency=low
+
+  bugfixes
+  - resists when a non Ivy Agent broadcasts on our address
+  - invokes disconnect() on a normal IvyClient end of run()
+  - bus.start(null) now *really* starts on IVYBUS property or 127:2010 if the
+    property is not set
+  - bugfix J007 : breaks connexions with remote clients using a faulty
+    protocol, ignore subscriptions to faulty regexps.
+  - bugfix J006 : invokes the applicationListeners's disconnect method at the
+    end of the run() loop
+  - the IvyWatcher accepts connexions from remote hosts with the same port
+    number. Closes a possible bug, yet to check thoroughfully...
+  - bugfix J005 : the IvyWatcher's loop doesn't break on faulty broadcasts,
+    belonging to  non ivy application, e.g.
+  - major rewrite of the internals of the Ivy class structure
+
+  new features
+  - added a sendToSelf(boolean) method in the Ivy class to allow the
+    sendMsg() to trigger our own  callbacks. Default is false.
+
+  API Changes (WARNING, you might have to recompile you applications)
+  - changed the API for Ivy.sendMsg and IvyClient.sendDirectMsg, both function
+    can now raise an IvyException if the message contains \n or \0x3
+  - changed the API for IvyApplicationListener ( die now requires a String
+      argument ).
+  - changed the API for Ivy.bindMsg(). It now raises an IvyException if the
+    regexp was not compiled successfully (e.g.: "(.*"). 
+  - added an IvyBindListener and Ivy.addBindListener, Ivy.removeBindListener
+    order to hook callbacks upon reception of bind requests. It is now
+    possible to write a decent ivy monitor program. JProbe has been rewritten
+    this way and now displays the subscriptions in real time, not only at
+    startup ( should I file a bugreport against ivy-c ? )
+  - Probe can send messages to itself, with the -s command line switch
+
+
+ -- Yannick Jestin <jestin@cena.fr>  Tue, 18 Feb 2003 16:49:00 +0100
+
+ivy-java (1.2.3) unstable; urgency=low
+
+  - debian packaging corrected, now build-depends on java-compiler and
+    depends on java-virtual-machine. I should switch to libivy-java.
+    The classes are not unpacked in the repository, but whithin a jar file.
+  - added a jprobe shell script
+  - added the testbench code in the documentation
+  - Many bugfixes thanks to a new testbench
+   * the datagram sender is in its own thread. Now works with jdk1.2
+   * IvyClient doesn't loop any more on a remote disconnexion
+   * early disconnect is now possible without hanging
+   * fixed a bug on older JVM with an exotic thread handling. Threads are
+     really hard to debug.
+  - new Features:
+   * directMessage now available in the API and in Probe
+   * IVYBUS System property is set according to the policy, and propagated to
+     the children. It is useful if you want to fork.
+  - new Doc
+   * README rewritten
+   * IvyDaemon as a TCP to Ivy relay is now documented
+  - new Bug found on thread handling ( blackdown linux 1.1.8-v2 )
+  - new Bug found on thread handling ( blackdown linux 1.2.2 ) SIGSEGV
+
+ -- Yannick Jestin <jestin@cena.fr>  Tue, 07 Jan 2003 18:09:00 +0200
+
+ivy-java (1.2.2) unstable; urgency=low
+
+  - bugfix in IvyClient leading to a growth in CPU usage
+  - change of API calls (Vector and System) to allow compilation on JDK1.1.7A
+  - cleanup in examples
+  - no longer build-depends on j2sdk1.3
+  - simplified the doc handling
+
+ -- Yannick Jestin <jestin@cena.fr>  Fri, 27 Dec 2002 17:26:00 +0200
+
+ivy-java (1.2.1) unstable; urgency=low
+
+  - upstream release fixing a couple of bugs
+  - updates in the sgml documentation, which is now included in the package
+  - produces pdf and html from the sgml documentation
+
+ -- Yannick Jestin <jestin@cena.fr>  Fri, 27 Sep 2002 16:17:26 +0200
+
+ivy-java (1.2.0) unstable; urgency=low
+
+  - there is now a torough non regression test suite in tests directory
+  - First 1.2 release. It is now really functionnal.
+    I should have used a 0.xx numbering scheme in earlier versions
+  - updated the Changelog and debian changelog
+  - rewrite of the URLs to access the source on the ivy web site
+  - many bugs fixed: see upstream Changelog for details
+
+ -- Yannick Jestin <jestin@cena.fr>  Fri, 7 Jun 2002 13:11:26 +0200
+
+ivy-java (1.0.11) unstable; urgency=low
+
+  - moved TestIvy and TestIvySwing to examples
+  - added Counter.java in CVS repository and examples. Counter gives the
+    number of ivy message in the last second, last ten seconds, and last
+    minutes. It can also send those information on an ivy bus
+  - added a Makefile in examples
+  - modified the ivy-java man page
+  - made a link to /usr/share/java/repository/gnu instead of copying the files
+  - changed the package version number scheme to be a little more "debian compliant"
+
+ -- Yannick Jestin <jestin@cena.fr>  Wed, 5 Jun 2002 11:40:26 +0200
+
+ivy-java (1.0.10-1) unstable; urgency=low
+
+  - TestIvy and Probe System.exit on bus die
+  - IvyWatcher and IvyClient
+     * isInDomain() is wrong  in multicast. I've removed it
+     * there was a remanence effect in the datagrampacket buffer. I clean it up after each message
+     * cleaned up the getDomain() and getPort() code 
+     * I allow multiple domains
+     * I Removed the CPU eating loop on soTimeOut, with a vector of broadcast listeners
+
+ -- Yannick Jestin <jestin@cena.fr>  Thu, 4 Jun 2002 19:06:15 +0200
+
+ivy-java (1.0.9-1) unstable; urgency=low
+
+  * there were still some bugs in the protocol handling
+  * the die semantics is now abided by our java clients
+  * code cleaning
+  * the real examples have been put in examples
+
+ -- Yannick Jestin <jestin@cena.fr>  Thu, 7 Mar 2002 15:16:08 +0200
+
+ivy-java (1.0.8-1) unstable; urgency=low
+
+  * don't use StringTokenizer any more, it is too buggy and version dependent
+  * new ivyTranslater example
+  * new Counter program (in examples ) to show how to count
+    ivy messages
+  * cleaned IVY_DEBUG handling in Ivy.java
+  * added a global variable for protocol version and library version
+  * improved gnu.getopt.GetOpt support
+
+ -- Yannick Jestin <jestin@cena.fr>  Wen, 6 Mar 2002 14:04:08 +0200
+
+ivy-java (1.0.7-1) unstable; urgency=low
+
+  * Corrects the Bug of StringTokenizer ( no Bug tracking system yet )
+    reported on the mailing list.
+
+ -- Yannick Jestin <jestin@cena.fr>  Wen, 10 Oct 2001 13:35:08 +0200
+
+ivy-java (1.0.5-2) unstable; urgency=low
+
+  * Fix problems in the package building
+
+ -- Yannick Jestin <jestin@cena.fr>  Wen, 8 Aug 2001 16:43:08 +0200
+
+ivy-java (1.0.5-1) unstable; urgency=low
+
+  * Initial Release.
+
+ -- Yannick Jestin <jestin@cena.fr>  Mon, 6 Aug 2001 17:17:08 +0200

@@ -1,0 +1,8 @@
+ivy-java for Debian
+------------------------------
+
+You can test the provided Probe with:
+
+java fr.dgac.ivy.tools.Probe -b 127.255.255.255:12345 '(.*)'
+
+Yannick Jestin <jestin@cena.fr>, lun aoû  6 17:28:20 CEST 2001

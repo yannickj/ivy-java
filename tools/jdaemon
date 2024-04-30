@@ -1,0 +1,18 @@
+#!/bin/sh
+#
+# (c) CENA 2004
+# 
+#
+
+jar=/usr/share/java/ivy.jar 
+re=/usr/share/java/regexp.jar
+go=/usr/share/java/gnu-getopt.jar 
+#jar=../lib/ivy-java-1.2.6.jar
+bus=
+NOIPV6=-Djava.net.preferIPv4Stack=true
+
+if [ "$IVYBUS" ]; then
+  bus="-DIVYBUS=${IVYBUS}"
+fi
+
+java  ${NOIPV6} -classpath ${jar}:${re}:${go} $bus fr.dgac.ivy.tools.IvyDaemon "$@"

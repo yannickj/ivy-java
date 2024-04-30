@@ -1,0 +1,15 @@
+Source: libivy-java
+Section: devel
+Priority: optional
+Maintainer: Yannick Jestin <jestin@cena.fr>
+#Standards-Version: 3.5.2
+Build-Depends: lynx, libregexp-java, lib-gnu.getopt-java | libgetopt-java, docbook-utils, docbook, docbook2x, sgml2x, jade | openjade
+
+Package: libivy-java
+Architecture: all
+Depends:  lib-gnu.getopt-java | libgetopt-java, libregexp-java
+Suggests:
+Description: Ivy Software bus for java
+ The libivy-java package is a pure-Java implementation of the Ivy software bus
+ messaging scheme. It intends to ease the programming of distributed systems,
+ by giving the programmer the same kind of API as the programmation of GUIs.

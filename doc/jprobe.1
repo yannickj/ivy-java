@@ -1,0 +1,108 @@
+.\" '\"
+.\" '\" Ivy jrpobe, an Ivy agent for monitoring exchanges on a bus
+.\" '\"
+.\" '\" Copyright (C) 1997-2006
+.\" '\" DSNA/DTI/SDER ( Centre d'Études de la Navigation Aérienne )
+.\" '\"
+.\" '\" See the file "license.terms" for information on usage and redistribution
+.\" '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+.\" '\" 
+.\" '\" 
+.TH "jprobe" "" "" "Yannick Jestin <Yannick.Jestin@enac.fr>" ""
+.SH "NAME"
+jprobe \- a Ivy java agent for monitoring exchanges on a bus
+
+.SH "SYNOPSIS"
+
+ jprobe [-b bus] [regexps]
+
+.SH OPTIONS
+
+ -b BUS  specifies the Ivy bus domain
+ -c CLASS        uses a message class CLASS=Word1,Word2,Word3...
+ -n ivyname (default JPROBE)
+ -q      quiet, no tty output
+ -d      debug
+ -t      time stamp each message
+ -s      sends to self
+ -h      help
+  regexp is a list of zero to many Perl5 compatible regular expression jprobe
+will subscribe to every of those regular expressions, and print the contents
+(or more exactly the captured contents) of all matching messages that will be
+emitted on the bus by other applications. Do not forget to protect your
+regexps with quotes if you use brackets or the * sign, otherwise your shell
+might interpret them.
+
+.SH "DESCRIPTION"
+jprobe connects to an Ivy bus and allows you to send and receive messages through a text interface. This is mainly useful for testing and debugging Ivy applications.
+
+.SH EXAMPLES
+.B jprobe '(.*)'
+will print all messages exchanged on the default bus, with their full contents.
+
+.SH LINE COMMANDS
+
+once jprobe is started, you can send messages line by line. If you want to
+issue a command to jprobe, use one of the following commands:
+
+.nf
+ \.die CLIENT                     sends a die message
+.nf
+ \.dieall-yes-i-am-sure           sends a die to all clients
+.nf
+ \.direct CLIENT ID MSG           sends the direct message to the client
+.nf
+ \.bye                            quits the probe
+.nf
+ \.quit                           quites the probe
+.nf
+ \.list                           lists the clients on the bus
+.nf
+ \.bind REGEXP                    subscribes to a regexp
+.nf
+ \.unbind REGEXP                  unsubscribes to a regexp
+.nf
+ \.bound CLIENT                   lists the subscriptions of a client, .bound to get all
+.nf
+ \.bound                          lists the subscriptions
+.nf
+ \.where CLIENT                   displays the host where a client runs
+.nf
+ \.time COUNT MESSAGE             measures the time it takes to send COUNT messages
+.nf
+ \.ping CLIENT             measures the roundrip time in milliseconds to a client
+
+.SH "EXAMPLES"
+.nf 
+jprobe \-help
+.nf 
+jprobe \-b 127.0.0.1:3042,10.192.36:2021,228.5.6.7:54321 '^coucou (.*)'
+.nf 
+jprobe \-d \-b 10.192.36:2021 '^coucou (.*)'
+
+.SH "BUGS"
+See the /usr/share/doc/libivy-java/BUGS file for details.
+
+.SH "AUTHORS"
+.nf 
+Yannick Jestin <Yannick.Jestin@enac.fr>
+.nf 
+Francois\-Regis Colin <fcolin@cena.fr>
+.SH "SEE ALSO"
+ivy\-c (1)
+.nf 
+ivy\-perl (1)
+.nf 
+ivy\-c\-functions (1)
+.nf 
+ivyprobe (1)
+.nf
+pcrepattern (3)
+.sp
+For further details, please refer to the Ivy html page at http://www.eei.cena.fr/products/ivy/
+
+.SH "NOTES"
+In case of any comment or bug report on this library, please contact yannick.jestin@enac.fr
+.nf 
+Special thanks to Michelle Jacomi for her kind support and
+documentation writing.

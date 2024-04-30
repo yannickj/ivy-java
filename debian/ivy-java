@@ -1,0 +1,9 @@
+Document: libivy-java
+Title: API documentation for ivy-java
+Author: Yannick Jestin
+Abstract: API documentation for libivy-java Java package
+Section: Programming
+
+Format: HTML
+Index: /usr/share/doc/ivy-java/api/index.html
+Files: /usr/share/doc/ivy-java/api/*

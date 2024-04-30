@@ -1,0 +1,111 @@
+.\" '\"
+.\" '\" Ivy, Java interface \- library managing connexions to a software bus
+.\" '\"
+.\" '\" Copyright (C) 1997-2004
+.\" '\" Centre d'Études de la Navigation Aérienne
+.\" '\"
+.\" '\" See the file "license.terms" for information on usage and redistribution
+.\" '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+.\" '\" 
+.\" '\" 
+.TH "Ivy-java" "" "" "Yannick Jestin <yannick.jestin@enac.fr>" ""
+.SH "NAME"
+ivy\-java \- a software bus library java implementation
+.SH "SYNOPSIS"
+Ivy\-java provides a useful set of Java library classes for communicating between different
+processes through a software bus
+.SH "DESCRIPTION"
+Ivy is a software bus, i.e. a system that allows any software component to
+ exchange data freekly.
+
+The basic principle of a software bus is to ease the rapid implementation of new
+agents, and to manage a dynamic collection of agents on the bus. Agents connect,
+send messages, receive messages, and disconnect without hindering the overall
+functionnality of the bus.
+
+Each time an application initializes a connection on the bus, it publishes the
+list of the messages it has subscribed to and then emits a a ready message.
+
+.nf 
+The essential classes of Ivy Java are:
+.nf 
+.I Ivy: 
+\ API for the connexion to the software bus
+.nf 
+.I IvyApplicationListener: 
+\ contains 4 virtual methods for handling connexion, deconnexion,
+die and direct messages
+.nf 
+.I IvyApplicationAdapter: 
+\ to implement the IvyApplicationListener methods
+.nf 
+.I Probe: 
+\ a tool to connect to the bus and exchange with the other agents
+.nf 
+.I IvyDaemon:
+\ a daemon to access the bus via a simple socket: you connect (default port :
+3456 ), write a message, and exit. The IvyDaemon firts sets up the Ivy
+mechanisms and listens to that socket, and each time a string is sent on the
+socket, it is forwarded to the bus.  This is useful in shell scripts, in cunjunction
+with the TCP/UP swiss army knif netcat. For instance: echo "coucou" | nc \-q 0 localhost 3456
+
+.SH "ENVIRONMENT"
+.I the IVYBUS property can be given via the \-DIVYBUS=xxx.yyy.zzz:port command line 
+argument. It can be a list of addresses followed by a port number. The default is a
+datagram local address on a non priviledged port 127.255.255.255:2010 , it can also be
+ shortened to 127:2010.  You can specify other datagram adresses with respect to your
+local configuration (see ifconfig(1) ), and you can specify an IP multicast
+address 228.5.6.7:8910 for instance. You can supply multiple domains,
+separated by colons.
+
+.I the IVYBUS shell variable is not used any more, since the policy of the JDK has
+changed on this point since 1.3 . You can still use it on a previous JDK.
+
+.nf 
+.SH "FILES"
+.I /usr/share/java/repository/fr/dgac/ivy/*.class
+.nf 
+.I /usr/share/doc/ivy\-java/
+
+.SH "EXAMPLES"
+.nf 
+java \-DIVYBUS=143.196.53.255:2011 fr.dgac.ivy.Probe -help
+.nf 
+java \-DIVYBUS=127.0.0.1:3042,10.192.36:2021,228.5.6.7:54321 fr.dgac.ivy.Probe '^coucou (.*)'
+.nf 
+java fr.dgac.ivy.Probe \-b 10.192.36:2021 '^coucou (.*)'
+
+.SH "NEEDED LIBRARIES"
+.I jdk from 1.1 to 1.4
+.nf 
+.I the apache jakarta project regexp library ( supersedes libgnu\-regexp\-java
+since ivy 1.2.6 )
+.nf 
+.I libgnu\-getopt\-java
+
+.SH "BUGS"
+See the BUGS files for details.
+
+.SH "AUTHORS"
+.nf 
+Yannick Jestin <yannick.jestin@enac.fr>
+.nf 
+Francois\-Regis Colin <fcolin@cena.fr>
+.SH "SEE ALSO"
+ivy\-c (1)
+.nf 
+ivy\-perl (1)
+.nf 
+ivy\-c\-functions (1)
+.nf 
+ivyprobe (1)
+.nf
+pcrepattern (3)
+.sp
+For further details, please refer to the Ivy html page at http://www.eei.cena.fr/products/ivy/
+
+.SH "NOTES"
+In case of any comment or bug report on this library, please contact the author
+.nf 
+Special thanks to Michelle Jacomi for her kind support and
+documentation writing.

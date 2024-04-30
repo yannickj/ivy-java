@@ -1,0 +1,75 @@
+<project default="run" basedir=".">
+
+  <!-- Help on usage -->
+  <target name="usage">
+    <echo message="Ivy test suite"/>
+    <echo message="-------------------------------------------------------------"/>
+    <echo message=" available targets are:"/>
+    <echo message="   compile : Generate classes"/>
+    <echo message="   run     : Runs the tests"/>
+    <echo message="-------------------------------------------------------------"/>
+    <echo message=""/>
+  </target>
+
+  <!-- <property name="build.compiler" value="javac" /> -->
+  <property name="ivy.home" value=".." />
+  <property name="ivydomain" value="224:3456" />
+
+  <path id="testivy-jars">
+      <pathelement location="${ivy.home}/build/classes/"/>
+      <pathelement location="/opt/local/share/java/java-getopt-1.0.14.jar"/>
+  </path>
+ <property name="testivy-jars" refid="testivy-jars"/>
+
+  <target name="run" depends="compile">
+    <echo message="runs the different tests..." />
+     <java classpath="${testivy-jars}:classes" fork="true" classname="NewLine">
+       <arg line="-n 100000"/>
+     </java>
+     <java classpath="${testivy-jars}:classes" fork="true" classname="TestApi">
+	 <arg line="-b ${ivydomain}"/>
+     </java>
+     <java classpath="${testivy-jars}:classes" fork="true" classname="fr.dgac.ivy.Probe"></java>
+     <java classpath="${testivy-jars}:classes" fork="true" classname="BenchLocal">
+	 <arg line="-b ${ivydomain}"/>
+     </java>
+     <java classpath="${testivy-jars}:classes" fork="true" classname="BenchLocal">
+	 <arg line="-b ${ivydomain}"/>
+     </java>
+     <java classpath="${testivy-jars}:classes" fork="true" classname="BenchLocal">
+	 <arg line="-b ${ivydomain}"/>
+	 <arg line="-d 100"/>
+     </java>
+     <java classpath="${testivy-jars}:classes" fork="true" classname="BenchLocal">
+	 <arg line="-b ${ivydomain}"/>
+	 <arg line="-d 0"/>
+     </java>
+     <java classpath="${testivy-jars}:classes" fork="true" classname="BenchLocal">
+	 <arg line="-b ${ivydomain}"/>
+	 <arg line="-t 2 -d 100"/>
+     </java>
+     <java classpath="${testivy-jars}:classes" fork="true" classname="BenchLocal">
+	 <arg line="-b ${ivydomain}"/>
+	 <arg line="-t 2 -d 0"/>
+     </java>
+     <java classpath="${testivy-jars}:classes" fork="true" classname="AsyncAPI">
+       <arg line="-r -l 5 -d 1 -s 10"/>
+       <arg line="-b ${ivydomain}"/>
+     </java>
+     <java classpath="${testivy-jars}:classes" fork="true" classname="StopStart">
+       <arg line="-b ${ivydomain}"/>
+     </java>
+  </target>
+
+  <target name="compile">
+    <mkdir dir="classes"/>
+    <javac classpath="${testivy-jars}"
+        debug="true"
+        deprecation="on"
+        destdir="classes"
+        includes="**/*.java"
+        optimize="on"
+        srcdir="."/>
+  </target>
+
+</project>

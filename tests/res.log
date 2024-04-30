@@ -1,0 +1,74 @@
+*****************************
+TEST SENDNOW
+*****************************
+java -DIVY_DEBUG  -classpath ../build/testclasses:../build/jar/ivy-java.jar:/Users/yann/dev/bundle SendNow -b 224.5.6.7:8910
+starting receiver
+-->Ivy[1]<-- lib: 1.2.16 protocol: 3 TCP service open on port 54931
+-->Ivy[1]<-- service thread started
+-->IvyWatcher[0,1]<-- Thread started
+-->IvyWatcher[0,1]<-- beginning of a watcher Thread
+starting sender
+DEBUG bus <ReceiveNow>[port:54931,serial:1] -- threads: 1reason: packet sender started
+-->IvyWatcher[0,1]<-- PacketSender thread started
+-->Ivy[0]<-- lib: 1.2.16 protocol: 3 TCP service open on port 54932
+-->Ivy[0]<-- service thread started
+DEBUG bus <ReceiveNow>[port:54931,serial:1] -- threads: 2reason: UDP packet received
+sending
+DEBUG bus <SendNow>[port:54932,serial:0] -- threads: 1reason: packet sender started
+-->IvyWatcher[1,0]<-- Thread started
+-->IvyWatcher[1,0]<-- PacketSender thread started
+-->Ivy[0]<-- I'm waiting before sending, a connecting tread is in progress
+-->IvyWatcher[1,0]<-- beginning of a watcher Thread
+DEBUG bus <SendNow>[port:54932,serial:0] -- threads: 2reason: UDP packet received
+-->IvyWatcher[0,1]<-- there's an appId: ID<ReceiveNow1:1338196257564:1616592845>
+-->IvyWatcher[1,0]<-- broadcast accepted from 192.168.1.221:8910, port:54931, protocol version:3
+-->IvyWatcher[0,1]<-- ignoring my own broadcast
+-->IvyWatcher[1,0]<-- no known agent originating from 192.168.1.221/192.168.1.221:54931
+DEBUG bus <ReceiveNow>[port:54931,serial:1] -- threads: 1reason: UDP packet processed
+DEBUG bus <ReceiveNow>[port:54931,serial:1] -- threads: 2reason: UDP packet received
+-->IvyWatcher[0,1]<-- broadcast accepted from 192.168.1.221:8910, port:54932, protocol version:3
+-->IvyWatcher[0,1]<-- no known agent originating from 192.168.1.221/192.168.1.221:54932
+-->IvyClient[1,1] ReceiveNow (remote none)<-- incoming connection on Socket[addr=/192.168.1.221,port=54933,localport=54931]
+-->IvyClient[2,1] ReceiveNow (remote none)<-- outgoing connection on Socket[addr=192.168.1.221/192.168.1.221,port=54932,localport=54934]
+-->IvyClient[0,0] SendNow (remote none)<-- outgoing connection on Socket[addr=192.168.1.221/192.168.1.221,port=54931,localport=54933]
+-->IvyClient[1,1] ReceiveNow (remote none)<-- Thread started
+-->Ivy[1]<-- added IC[2,1] ReceiveNow:none:54932 in half: (none,)
+-->IvyClient[1,1] ReceiveNow (remote none)<-- connection established with 192.168.1.221:54933
+-->IvyClient[2,1] ReceiveNow (remote none)<-- sending our service port 54931
+DEBUG bus <ReceiveNow>[port:54931,serial:1] -- threads: 1reason: UDP packet processed
+-->IvyClient[2,1] ReceiveNow (remote none)<-- Thread started
+-->IvyClient[2,1] ReceiveNow (remote none)<-- connection established with 192.168.1.221:54932
+-->IvyWatcher[1,0]<-- PacketSender thread stopped
+-->IvyWatcher[0,1]<-- PacketSender thread stopped
+DEBUG bus <ReceiveNow>[port:54931,serial:1] -- threads: 0reason: packet sender finished
+DEBUG bus <SendNow>[port:54932,serial:0] -- threads: 1reason: packet sender finished
+-->Ivy[0]<-- I'm done waiting before sending
+-->Ivy[0]<-- I'm waiting before sending, a connecting tread is in progress
+-->Ivy[0]<-- I'm done waiting before sending
+-->Ivy[0]<-- I'm waiting before sending, a connecting tread is in progress
+-->Ivy[0]<-- I'm done waiting before sending
+-->Ivy[0]<-- I'm waiting before sending, a connecting tread is in progress
+-->Ivy[0]<-- I'm done waiting before sending
+-->Ivy[0]<-- I'm waiting before sending, a connecting tread is in progress
+-->Ivy[0]<-- I'm done waiting before sending
+-->Ivy[0]<-- I'm waiting before sending, a connecting tread is in progress
+-->Ivy[0]<-- I'm done waiting before sending
+-->Ivy[0]<-- I'm waiting before sending, a connecting tread is in progress
+-->Ivy[0]<-- I'm done waiting before sending
+-->Ivy[0]<-- I'm waiting before sending, a connecting tread is in progress
+-->Ivy[0]<-- I'm done waiting before sending
+-->Ivy[0]<-- I'm waiting before sending, a connecting tread is in progress
+-->Ivy[0]<-- I'm done waiting before sending
+-->Ivy[0]<-- I'm waiting before sending, a connecting tread is in progress
+-->Ivy[0]<-- I'm done waiting before sending
+-->Ivy[0]<-- I'm waiting before sending, a connecting tread is in progress
+-->Ivy[0]<-- I'm done waiting before sending
+-->Ivy[0]<-- I'm waiting before sending, a connecting tread is in progress
+-->Ivy[0]<-- I'm done waiting before sending
+-->Ivy[0]<-- I'm waiting before sending, a connecting tread is in progress
+-->Ivy[0]<-- I'm done waiting before sending
+-->Ivy[0]<-- I'm waiting before sending, a connecting tread is in progress
+-->Ivy[0]<-- I'm done waiting before sending
+-->Ivy[0]<-- I'm waiting before sending, a connecting tread is in progress
+-->Ivy[0]<-- I'm done waiting before sending
+-->Ivy[0]<-- I'm waiting before sending, a connecting tread is in progress

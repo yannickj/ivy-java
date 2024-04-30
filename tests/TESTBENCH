@@ -1,0 +1,96 @@
+-------------------------------------------------------------------------------
+BUGS
+-------------------------------------------------------------------------------
+
+1.2.14-v1 Ven 24 jui 2011 09:50:42 CEST
+test async on MacOSX
+	make async sometimes fails, double connexion from MsReceive hangs the
+	process (each message callback is executed twice)
+	TODO !
+-->Ivy[0]<-- found a peer
+-->Ivy[0]<-- added IC[0,0] MSreceive:none:54063 in half: (none,)
+-->Ivy[0]<-- waiting for a peer
+-->Ivy[0]<-- added IC[3,0] MSreceive:MSsend:54063 in half: (MSsend,none,)
+-->Ivy[0]<-- removed IC[3,0] MSreceive:MSsend:54063 from half: (none,)
+-->Ivy[0]<-- added IC[3,0] MSreceive:MSsend:54063 in clients: (MSsend,)
+-->Ivy[0]<-- removed IC[0,0] MSreceive:MSsend:54063 from half: ()
+-->Ivy[0]<-- added IC[0,0] MSreceive:MSsend:54063 in clients: (MSsend,MSsend,)
+
+fixed in 1.2.14-v3, seemingly, or so I hope
+
+
+-------------------------------------------------------------------------------
+TODO :
+  - DOC DOC DOC
+  - make run
+  - asynchronous sending ?
+  - automate all the following:
+  - test the protocol errors (broadcast, bindregexps, etc)
+  - use a parameter for the local domain address . 10.192.36 is hardcoded,
+    this is ugly
+  - check the malformed broadcasts
+    echo "coucou" | nc -u -b -q 0 127.255.255.255 2010
+  - check the remote disconnections (ivyprobe ^C ) and check if the
+    disappearance is OK
+  - propagate the testbenches to other implementations ...
+
+-------------------------------------------------------------------------------
+
+How to check if it doesn't work ? -> There is now a simple testbench.
+It can fail if the architecture doesn't support broadcast on loopback address
+( change the IVY_BUS variable, e.g.: on MacOSX.2, or Solaris ).
+
+to test every feature 		$ make 
+For the old API and regexp Check$ make test1
+For the new API Check		$ make api
+For the end of input check	$ make probe
+To be more robust		$ repeat 100 make
+
+Things that are yet to be written, but not easy:
+- automate tests with other implementations
+- check the network connectivity (UDP broadcast, multicast)
+- check the symmetry, whatever the order of the connections ( client A,
+    client B, client C vs A, C, B ... )
+
+-------------------------------------------------------------------------------
+How to launch the testbenchs.
+
+  First, recompile the class with the right library.
+  in src, make JAVAC=/path/to/javac JAVA=/path/to/java
+  in tests, make JAVAC=/path/to/javac JAVA=/path/to/java 
+  in examples, make JAVAC=/path/to/javac JAVA=/path/to/java 
+  It is possible to add an additionnal CLASSPATH make variable.
+
+  For simplicity's sake, I personnaly use links from src/fr to tests/fr and
+  to examples/fr
+
+  For older JDK (1.1) , you must add swingall.jar (available from sun's web
+  site) and classes.zip in your classpath. An example is provided in the
+  makefile.
+
+  Here is the list of commands I use and platforms I have tested successfully:
+
+  linux:
+
+    java version "1.4.1"
+    Java(TM) 2 Runtime Environment, Standard Edition (build
+    Blackdown-1.4.1-beta)
+    Java HotSpot(TM) Client VM (build Blackdown-1.4.1-beta, mixed mode)
+    all tests ok.
+
+    jdk1.1.8
+    java version "1.1.8"
+    be sure to recompile all the classes !!!
+    linux blackdown 1.1.8_v3
+    there is the JVM bug (see BUGS for details)
+
+    java version "1.2.2"
+    Classic VM (build Linux_JDK_1.2.2_FCS, native threads, sunwjit)
+    there is a possible JVM bug ( see BUGS for details ) leading to a
+    segmentation violation
+
+    java version "1.3.1"
+    Java(TM) 2 Runtime Environment, Standard Edition (build
+    Blackdown-1.3.1-FCS)
+    Java HotSpot(TM) Client VM (build Blackdown-1.3.1-FCS, mixed mode)
+

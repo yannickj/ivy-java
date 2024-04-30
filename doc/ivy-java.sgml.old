@@ -1,0 +1,909 @@
+<?xml version='1.0' encoding="iso-8859-1"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook V4.5//EN"
+               "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
+<!--
+	The Ivy Java guide
+	SGML source file
+
+	Copyright (c) 1999-2006
+	DSNA/DTI Centre d'Etudes de la Navigation Aerienne
+	ENAC Ecole Nationale de l'Aviation Civile
+	Author: Yannick Jestin <yannick.jestin@enac.fr>
+<article xmlns="http://docbook.org/ns/docbook">
+-->
+
+<article>
+
+<artheader>
+
+<title>The Ivy Java library guide</title>
+<subtitle>CENA NT02-819</subtitle>
+<titleabbrev>NT02-819 © CENA</titleabbrev>
+
+<authorgroup>
+<author>
+<firstname>Yannick</firstname><surname>Jestin</surname>
+<affiliation><address><email>yannick.jestin@enac.fr</email></address></affiliation>
+</author>
+</authorgroup>
+<date>July 20, 2006</date>
+
+<copyright>
+<year>2006</year>
+<holder>DGAC/DSNA/DTI</holder>
+</copyright>
+
+<abstract>
+<para>
+This document is a programmer's guide that describes how to use the Ivy
+Java library to connect applications to an Ivy bus. This guide describes
+version 1.2.12 of the library. This document itself is part of the Java
+package, available on the <ulink
+url="http://www.eei.cena.fr/products/ivy/">Ivy web site</ulink>.
+</para>
+</abstract>
+</artheader>
+
+<sect1><title>Foreword</title>
+<para>
+This document was written in SGML according to the DocBook DtD, so
+as to be able to generate PDF and html output. However, the authors
+have not yet mastered the intricacies of SGML, the DocBook DtD, the
+DocBook Stylesheets and the related tools, which have achieved the
+glorious feat of being far more complex than LaTeX and Microsoft Word
+combined together. This explains why this document, in addition to being
+incomplete, is quite ugly. We'll try and improve it. 
+</para>
+</sect1>
+
+
+<sect1><title>What is Ivy?</title>
+<para>
+Ivy is a software bus initially designed at CENA.  A software bus is a system that
+allows software applications to exchange information with the illusion of
+broadcasting that information, selection being performed by the receiving
+applications. Using a software bus is very similar to dealing with events in a
+graphical toolkit: on one side, messages are emitted without caring about who
+will handle them, and on the other side, one decide to handle the messages
+that have a certain type or follow a certain pattern. Software buses are
+mainly aimed at facilitating the rapid development of new agents, and at
+managing a dynamic collection of agents on the bus: agents show up, emit
+messages and receive some, then leave the bus without blocking the others.
+</para>
+
+<para>
+Ivy is implemented as a collection of libraries for several languages and
+platforms. If you want to read more about the principles Ivy before reading
+this guide of the Java 
+library, please refer to <citetitle>The Ivy software bus: a white
+paper</citetitle>. If you want more details about the internals of Ivy, have a
+look at <citetitle>The Ivy architecture and protocol</citetitle>. And finally,
+if you are more interested in other languages, refer to other guides such as
+<citetitle>The Ivy Perl library guide</citetitle> (not yet written), or
+<citetitle>The Ivy C library guide</citetitle>. All those documents should be 
+available from <ulink url="http://www.eei.cena.fr/products/ivy/">the Ivy Web site </ulink>.
+</para>
+</sect1>
+
+<sect1><title>The Ivy Java library</title>
+
+<sect2><title>What is it?</title>
+<para>
+The Ivy Java library (aka libivy-java or fr.dgac.ivy) is a Java package that
+allows you to connect applications to an Ivy bus. You can use it to write
+applications in Java. You can also use it to connect any thread-safe Java
+application to an Ivy bus. So far, this library has been tested and used on a variety of
+Java virtual machines (from 1.1.7 to 1.5.0), a variety of vendors (kaffe+gcj,
+sun jdk, blackdown) and on a variety of architectures (GNU/Linux, Solaris,
+Windows NT,XP,2000, MacOSX). It is developped and maintain on a Debian
+GNU/Linux unstable distribution.
+</para>
+
+<para>
+The Ivy Java library was originally developed by François-Régis Colin and 
+Yannick Jestin within a group at CENA (Toulouse, France). It is now maintained
+by Yannick.
+</para>
+</sect2>
+
+<sect2><title>Getting and installing the Ivy Java library</title>
+
+<para>
+You can get the latest versions of the Ivy C library from <ulink
+URL="http://www.eei.cena.fr/products/ivy/">the Ivy web site</ulink>. It is
+packaged either as a jar file or as a debian package. We plan to package it
+according to different distribution formats, such as .msi (Windows) or .rpm
+(Redhat and Mandrake linux). Contributors are welcome for package management.
+</para>
+
+<para>
+The package is mainly distributed as a jar file. In order to use it, either add
+it in your CLASSPATH environment variable, put the it in your $JAVA_HOME/jre/lib/ext/
+directory, or C:\Program Files\JavaSoft\... for Windows. The best way to avoid
+mistakes is to put it in the command line each time you want to use ivy
+<command>$ java -classpath .:/path/to/ivy.jar:/path/to/regexp.jar:/path/to/getopt.jar className</command>
+</para>
+
+<para>
+The package contains the documentation, the sources and the class files for the fr.dgac.ivy package, alongside with examples and a small set of tools ( IvyDaemon, jrobe, jafter). You will need the <ulink url="http://jakarta.apache.org/regexp/">Apache Jakarta project regexp library</ulink> and the <ulink url="http://www.urbanophile.com/arenn/coding/download.html">gnu getopt library</ulink>. Those could be included in the jar file, but not in the debian package.
+</para>
+
+<para>
+In order to test the presence of Ivy on your system once installed, run the following command: 
+<screen>
+$ <userinput>java fr.dgac.ivy.tools.Probe</userinput>
+</screen>
+If should display a line about broadcasting on a strange address, this is OK
+and means it is ready and working. If it complains about a missing class (
+java.lang.NoClassDefFoundError ), then you have not pointed your virtual
+machine to the jar file or your installation is incomplete. Alternatively, you can use the jprobe shell script.
+<screen>
+$ <userinput>jprobe</userinput>
+</screen>
+</para>
+
+</sect2>
+
+</sect1>
+
+<sect1><title>Your first Ivy application</title>
+<para>
+We are going to write a "Hello world translater" for an Ivy bus. The application will
+subscribe to all messages starting with the "Hello" string, and re-emit them
+on the bus having translated "Hello" into "Bonjour" (Hello in french).
+In addition, the application will quit as soon as it receives a "Bye" message.
+</para>
+
+<sect2><title>The code</title>
+<para>
+Here is the code of "ivyTranslater.java":
+<programlisting>
+import fr.dgac.ivy.* ;
+
+class ivyTranslater implements IvyMessageListener {
+
+  private Ivy bus;
+
+  ivyTranslater() throws IvyException {
+    // initialization, name and ready message
+    bus = new Ivy("IvyTranslater","IvyTranslater Ready",null);
+    // classical subscription
+    bus.bindMsg("^Hello(.*)",this);
+    // inner class subscription ( think awt )
+    bus.bindMsg("^Bye$",new IvyMessageListener() {
+      public void receive(IvyClient client, String[] args) {
+	// leaves the bus, and as it is the only thread, quits
+        bus.stop();
+      }
+    });
+    bus.start(null); // starts the bus on the default domain
+  }
+
+  // callback associated to the "Hello" messages"
+  public void receive(IvyClient client, String[] args) {
+    try {
+      bus.sendMsg("Bonjour"+((args.length&gt;0)?args[0]:""));
+    } catch (IvyException ie) {
+      System.out.println("can't send my message on the bus");
+    }
+  }
+
+  public static void main(String args[]) throws IvyException {
+    new ivyTranslater();
+  }
+}
+</programlisting>
+
+</para></sect2>
+
+<sect2><title>Compiling it</title>
+<para>
+You should be able to compile the application with the
+following command (your classpath may vary):
+<screen>
+$ <userinput>javac -cp  .:/usr/share/java/getopt.jar:/usr/share/java/regexp.jar:/usr/share/java/ivy.jar ivyTranslater.java</userinput>
+</screen>
+</para></sect2>
+
+<sect2><title>Testing</title>
+<para>
+We are going to test our application with <command>fr.dgac.ivy.tools.Probe</command>.
+In a shell, launch ivyTranslater:
+<screen>
+  $ <userinput>java -cp .:/usr/share/java/getopt.jar:/usr/share/java/regexp.jar:/usr/share/java/ivy.jar ivyTranslater</userinput>
+</screen>
+In another shell, launch <command>java fr.dgac.ivy.tools.Probe '(.*)'</command>.
+You can see that the IvyTranslater has joined the bus, published its
+subscriptions, and sent the mandatory ready message. As your probe has
+subscribed to the eager regexp .* and reports the matched string within the
+brackets (.*), the ready message is printed.
+
+<screen>
+$ <userinput>java fr.dgac.ivy.tools.Probe '(.*)'</userinput>
+you want to subscribe to (.*)
+broadcasting on 127.255.255.255:2010
+IvyTranslater connected
+IvyTranslater subscribes to ^Bye$
+IvyTranslater subscribes to ^Hello(.*)
+IvyTranslater sent 'IvyTranslater Ready'
+</screen>
+
+Probe is an interactive program. Type "Hello Paul", and you should receive "Bonjour Paul".
+Type "Bye", and the ivyTranslater application should quit to the shell. Just
+quit Probe, issuing a Control-D ( or .quit ) on a line, and Probe exists to
+the shell.
+<screen>
+<userinput>Hello Paul</userinput>
+-&gt; Sent to 1 peers
+IvyTranslater sent 'Bonjour Paul'
+<userinput>Bye</userinput>
+-&gt; Sent to 1 peers
+IvyTranslater disconnected
+<userinput>&lt;Ctrl-D&gt;</userinput>
+$
+</screen>
+</para></sect2>
+
+</sect1>
+
+<sect1><title>Basic functions</title>
+<para>
+The javadoc generated files are available on line on the ivy web site, and should be included in your ivy java package (or in /usr/share/doc/libivy-java, alongside with this very manual). Here are more details on those functions.
+</para>
+
+<sect2><title>Initialization an Ivy object and joining the bus</title>
+
+<para>
+Initializing a Java Ivy agent is a two step process. First of all, you must
+create an <function>fr.dgac.ivy.Ivy</function> object. It will be the
+repository of your agent name, network state, subscriptions, etc. Once this object is
+created, you can subscribe to the various Ivy events: text messages through
+Perl compatible regular expressions, other agents' arrival, departure,
+subscription or unsubscription to regexps, direct messages or die command
+issued by other agents.
+</para>
+
+<para>
+At this point, your application is still not connected. In
+order to join the bus, call the <function>start(string domain)</function> method on
+your Ivy object. This will spawn two threads that will remain active until you
+call the <function>stop()</function> method on your Ivy object or until some
+other agent sends you a die message. Once this <function>start()</function> method has been called,
+the network machinery is set up according to the ivy protocol, and your agent
+is eventually ready to handle messages on the bus.
+<programlisting>
+fr.dgac.ivy.Ivy(String name,String message, IvyApplicationListener appcb)
+</programlisting>
+This constructor readies the structures for the software bus connexion. It is
+possible to have more than one bus at the same time in an application, be it on
+the same ivy broadcast address or one different ones. The <parameter>name</parameter> is
+the name of the application on the bus, and will by transmitted to other
+application, and possibly be used by them (through <function>String IvyClient.getApplicationName()</function>).
+The <parameter>message</parameter> is the first message that will be sent to other applications, with a slightly
+different broadcasting scheme than the normal one ( see <citetitle>The Ivy
+architecture and protocol</citetitle> document for more information. If
+<parameter>message</parameter> is null, nothing will be sent. Usually, other
+application subscribe to this ready message to trigger actions depending on
+the presence of your agent on the bus. The <parameter>appcb</parameter> is an object
+implementing the IvyApplicationListener interface. Its different methods
+are called upon arrival or departure of other agents on the bus, or when your
+application itself leaves the bus, or when a direct message is sent to your
+application. It is also possible to add or remove other application listeners
+using the <function>Ivy.AddApplicationListener()</function> and
+<function>Ivy.RemoveApplicationListener()</function> functions.
+
+<programlisting>
+public void start(String domainbus) throws IvyException
+</programlisting>
+This method connects the Ivy bus to a domain or list of domains. This spawns
+network managing threads that will be stropped with
+<function>Ivy.stop()</function> or when a die message is received. The
+rendezvous point is the String parameter <parameter>domainbus</parameter>, an
+UDP broadcast address like "10.0.0:1234" (255 are added at the end to become an
+IPv4 UDP broadcast address). This will determine the meeting point of the different
+applications. For the gory details, this is done with an UDP broadcast or an
+IP Multicast, so beware of routing problems ! You can also use a comma separated
+list of domains, for instance "10.0.0.1234,192.168:3456". If the domain is
+<parameter>null</parameter>, the API will check for the property
+<parameter>IVY_BUS</parameter> (set at the invocation of the JVM, e.g $
+java -DIVY_BUS=10:4567 myApp, or via an environment variable on older JVMs);
+if not present, it will use the default bus, which is 127.255.255.255:2010.
+The default address requires a broadcast enabled loopback interface to be
+active on your system (CAUTION, on MacOSX and some releases of SunOS, the
+default bus doesn't work ...). If an IvyException is thrown, your application
+is not able to send or receive data on the specified domain. 
+
+<programlisting>
+public void stop() 
+</programlisting>
+This methods stops the threads, closes the sockets and performs some clean-up.
+If there is no other thread running, the program quits. This is the preferred
+way to quit a program within a callback (please don't use
+<function>System.exit()</function> before
+having stopped the bus, even if it works ... ). Note that it is still
+possible to reconnect to the bus by calling <function>start()</function> once
+again.
+</para></sect2>
+
+<sect2><title>Emitting messages</title>
+<para>
+Emitting a message is much like echoing a string on a output channel. Portion
+of the message will be sent to the connected agent if the message matches
+their subscriptions.
+<programlisting>
+public int sendMsg(String message) 
+</programlisting>
+Will send each remote agent the substrings in case there is a regexp matching.
+The default behaviour is not to send the message to oneself !
+The result is the number of messages actually sent. The main issue here is
+that the sender ivy agent is the one who takes care of the regexp matching, so
+that only useful information are conveyed on the network. Be sure that the
+message sent doesn't contains protocol characters: 0x01 to 0x08 and
+unfortunately 0x0D, the newline character. If you want to send newlines, see
+protectNewline, in advanced functions.
+
+</para></sect2>
+
+<sect2><title>Subscription to messages</title>
+<para>
+Subscribing to messages consists in binding a callback function to a message pattern.
+Patterns are described by regular expressions with captures. Since ivy-java
+1.2.4, Perl Compatible Regular Expressions are used, with the Apache Jakarta
+Project regexp library (see the <ulink url="http://jakarta.apache.org/regexp/">jakarta regexp
+web site</ulink>). When a message matching the regular expression is detected
+on the bus (the matching is done at the sender's side), the recipient's callback function is
+called. The captures (ie the bits of the message that match the parts of regular expression
+delimited by brackets) are passed to the callback function much like options are passed to main.
+Use the <function>bindMsg()</function> method to bind a callback to a pattern, and the
+<function>unbindMsg</function> method to delete the binding.
+<programlisting>
+public int bindMsg(String regexp, IvyMessageListener callback);
+public void unBindMsg(int id);
+</programlisting>
+The <parameter>regexp</parameter> follows the PCRE syntax (see the <ulink
+url="http://www.pcre.org/"> pcre web site</ulink> or the pcrepattern(3) man
+page), grouping is done with brackets. The <parameter>callback</parameter>
+is an object implementing the IvyMessageListener interface, with the <function>receive</function>
+method. The thread listening on the connexion with the sending agent will execute the callback.
+</para>
+
+<para>
+There are two ways of defining the callback: the first one is to make an
+object an implementation of the IvyMessageListener interface, and to implement
+the <function>public void receive(Ivyclient ic, String[] args)</function>
+method. But this is limited to one method per class, so the second method used
+is the one of anonymous inner classes, introduced since Java 1.1 and widely used in
+swing programs, for instance:
+<programlisting>
+bindMsg("^a*(.*)c*$", new IvyMessageListener() {
+  public void receive(IvyClient ic,String[] args) {
+    ... // do some stuff
+  }
+});
+</programlisting>
+The processing of the ivy protocol and the execution of the callback are
+performed within an unique thread per remote client. Thus, the callback will
+be performed sequentially. If you want an asynchronous handling of callbacks,
+see in the advanced functions.
+
+</para></sect2>
+
+<sect2><title>Subscribing to application events</title>
+<para>
+Either at the creation time of your <function>Ivy</function> object or later
+on with <function>Ivy.addApplicationListener()</function>, you can add add
+some behaviour to perform callbacks upon different events:
+<itemizedlist>
+<listitem><para>when an agent joins the bus</para> </listitem>
+<listitem><para>when an agent leaves the bus</para> </listitem>
+<listitem><para>when an agent sends you a direct message</para> </listitem>
+<listitem><para>when an agent forces you to leave the bus</para> </listitem>
+</itemizedlist>
+This can be handy if you design an agent requiring somme coordination with
+other dedicated agents to run properly. To do so, the easiest way is to use
+the ready messages. You can find later a description of the <function>Ivy.waitForClient()</function> method to implement a correct synchronization.
+</para>
+</sect2>
+
+</sect1>
+
+<sect1><title>Advanced functions</title>
+
+<sect2><title>Sending to self</title>
+<para>
+By default, an application doesn't send the messages to itself. Usually, there
+are more efficient and convenient ways to communicate withing a program.
+However, if you want to take benefit of the ease of Ivy or to be as
+transparent as possible, you can set the Ivy object so that the pattern
+matching and message sending will be done for the sender too.
+<programlisting>
+public void sendToSelf(boolean b);
+public boolean isSendToSelf();
+</programlisting>
+</para>
+</sect2>
+
+<sect2><title>Initializing a domain</title>
+<para>
+The default behaviour of an Ivy agent is to accept a command line switch ( -b
+10:2010, e.g. ), and if not present, to use the IVYBUS property, ( given by the
+-DIVYBUS=10:34567 parameter to the jvm ), and, if not present, to default to
+Ivy.DEFAULT_DOMAIN. This domain is given as a string ardument to the
+Ivy.start() function. To make this logic easier to follow, the Ivy class
+provides the programmer with two useful function:
+<programlisting>
+public static String getDomain(String arg);
+public static String getDomainArgs(String progname,String[] args);
+</programlisting>
+The <function>Ivy.getDomain()</function> function, if arg is non null, will return arg, otherwise it
+will return the IVYBUS property, otherwise the DEFAULT_DOMAIN. A very simple
+way to start an Ivy agent is with
+<function>Ivy.start(getDomain(null))</function>. The
+getDomainArgs(name,args) will add very simple processing of the args given to
+the main() function, and give higher priority to the command line argument.
+</para>
+</sect2>
+
+<sect2><title>Newline within messages</title>
+<para>
+As we have seen in <function>Ivy.sendMsg()</function>, you can not have
+newline characters within the string you send on the bus. If you still want to
+send messages with newline, you can encode and decode them at the emitter and
+receiver's side. With <command>Ivy.protectNewLine(boolean b)</command>, you can set your
+Ivy object to ensure encoding and decoding of newlines characters. This is tested
+and working between Java ivy applications, but not yet implemented in other
+ivy libraries. The newlines are replaced by ESC characters ( hex 0x1A ). As
+the encoding and decoding cost a little more CPU and is not yet standardised
+in the Ivy protocol, use it at your own risk. We should of course protect the
+other protocol special characters.
+</para>
+</sect2>
+
+<sect2><title>Sending direct messages</title>
+<para>
+Direct messages is an ivy feature allowing the exchange of information between
+two ivy clients. It overrides the subscription mechanism, making the exchange
+faster ( there is no regexp matching, etc ). However, this features breaks the
+software bus metaphor, and should be replaced with the relevant bounded.
+regexps, at the cost of a small CPU overhead. The full direct message
+mechanism in Java has been made available since the ivy-java-1.2.3, but it
+won't be much documented, in order to make it harder to use.
+</para>
+</sect2>
+
+<sect2><title>Ivy and swing GUI</title>
+<para>
+Swing requires the code to run in the main swing thread. In order to avoid
+problems, be sure tu use the SwingUtilities.invokeLater() or
+SwingUtilities.invokeAndWait() methods if you Ivy callbacks impact swing
+components.
+</para>
+</sect2>
+
+<sect2><title>Asynchronous Subscription to messages</title>
+<para>
+For each and every remote agent on the bus, a thread is in charge of handling the encoding
+and decoding of the messages and of the execution of the callbacks. Thus, if a
+callback consumes much time, the rest of the communication is put on hold and
+the processing is serialised, eventually leading to a stacking in the socket
+buffer and to the blocking of the message sender. To alleviate this, we have
+set up (since 1.2.4) an asynchronous subscription, where each and every
+time a callback is performed, it is done in a newly created separate thread.
+As creating a thread is quite expensive, one should use this method for
+lengthy callbacks only. Furthermore, to avoid concurrent access to the
+callback data, the String[] argument passed on to the callbacks are cloned.
+This causes an extra overhead.
+<programlisting>
+public int bindMsg(String regexp, IvyMessageListener callback,boolean async);
+public int bindAsyncMsg(String regexp, IvyMessageListener callback);
+</programlisting>
+If the <parameter>async</parameter> boolean parameter is set to true, a new
+thread will be created for each callback. The same
+<function>unBindMsg()</function> can be called to cancel a subscription.
+</para>
+</sect2>
+
+<sect2><title>Waiting for someone: waitForClient and waitForMsg</title>
+<para>
+Very often, while developing an Ivy agent, you will be facing the need of the
+arrival of another agent on the bus to perform your task correctly. For
+instance, for your spiffy application to run, a gesture recognition engine
+will have to be on the bus, or another data sending application. The Ivy way
+to do this is to subscribe to the known agent's <parameter>ready
+message</parameter> (be sure to subscribe before starting the
+bus), or to implement an IvyApplicationListener and change of state in the
+<function>connect()</function> method. However, it is often useful to stop and
+wait, and it is awkward to wait for a variable change.
+<programlisting>
+IvyClient waitForClient(String name, int timeout)
+IvyClient waitForMsg(String regexp, int timeout) 
+</programlisting>
+These two methods allow you to stop the flow of your main (or other) thread
+by waiting for the arrival of an agent, or for the arrival of a message. If
+the agent is already here, <function>waitForClient</function> will return
+immediately. If <parameter>timeout</parameter> is set to null, your thread can
+wait "forever", otherwise it will wait <parameter>timeout</parameter>
+milliseconds. With <function>waitForMsg</function>, be aware that your subscription can be
+propagated to the remote agents after that their message was sent, so that
+you'd wait for nothing. You had better be sure that the
+<function>waitForMsg</function> method is called early enough.
+</para>
+</sect2>
+
+<sect2><title>Subscribing to subscriptions</title>
+<para>
+A very common practice when beginning to play with ivy is to develop an ivy
+agent monitor (the good practice is to use the excellent ivymon written in
+perl by Daniel Etienne). If you want to notity the user that a remote agent
+has subscribed or unsubscribed to a regular expression after the
+protocol handshake, then your monitor agent has to subscribe to subscriptions.
+To do so, use the following functions:
+<programlisting>
+public int addBindListener(IvyBindListener callback);
+public void	 removeBindListener(int id)
+</programlisting>
+A <function>IvyBindListener</function> object must implement the following
+interface:
+<programlisting>
+void bindPerformed(IvyClient client, int id, String regexp);
+void unbindPerformed(IvyClient client, int id, String regexp);
+</programlisting>
+For a code sample, see the Probe utility source code. Note that if you have
+enabled a filter (message classes), you will be notified the subscriptions
+even if they are considered useless. If you want to check if the regexp has a
+chance to match the message you're sending, use the
+<function>boolean Ivy.CheckRegexp(String regexp)</function>.
+</para>
+</sect2>
+
+<sect2><title>Monitoring the bus</title>
+<para>
+When in doubt, to check if the remote client is still responding, instead of
+relying on a callback, you can test the response of the protocol parsing
+thread. Use following method:
+<programlisting>
+Ivyclient.ping(PingCallback pc);
+</programlisting>
+It will send a ping token that will (hopefully) be parsed by the remote agent,
+and will trigger the following message with the elapsed time in milliseconds:
+<programlisting>
+void PingCallback.pongReceived(IvyClient ic,int elapsedTime);
+</programlisting>
+An example is provided in fr.dgac.ivy.tools.Probe.
+</para>
+</sect2>
+
+<sect2><title>Message classes</title>
+<para>
+When your Ivy bus is populated with many agents, the cost of pattern matching
+becomes painful. For instance, a bus with 20+ agents, with 2000+
+subscriptions, with hundreds of messages per second might cause a high CPU
+load, thus leading to slow responsiveness in GUI animations. To limit this
+phenomenon, use bounded regexp as much as possible like <function>^NAME
+VALUE=(.*)</function> ( see the programmer's style guide later on ). However,
+2000+ subscription are still 2000+ tests of bounded regexp, even if is less
+costful. It is possible not to do the tests provided some requirements are
+met:
+<itemizedlist>
+<listitem><para>your agent knows exhaustively and exactly the prefixes of all
+the messages it will send</para></listitem>
+<listitem><para>your use the <function>Ivy.setFilter()</function> before
+starting the bus, with the list of prefixes ( e.g.: { "TOTO1" "PREFIX", "ETC"
+} ) </para></listitem>
+</itemizedlist>
+</para>
+
+<para>
+If you use the message classes, your Ivy agent will ignore the bounded subscriptions
+of other agents that will never match any of your prefixes ( e.g: ^COUCOU
+neither matches TOTO1,  PREFIX, nor ETC ). The check is made this way:
+<itemizedlist>
+<listitem><para>if the regexp is bounded, the filter extracts the first word
+according to this regexp: <function>^\\^([a-zA-Z0-9_-]+).*</function></para></listitem>
+<listitem><para>the word is compared character to character to all the
+prefixes in the message class; if it is not present, the subscription is
+discarded</para></listitem>
+</itemizedlist>
+</para>
+
+<para>
+When your agent sends a message, many pattern matching won't be made, and it
+might save some time. Be sure to activate the <function>setFilter()</function>
+when you are sure that you know perfectly the message classes. You can play
+with the message classes with jprobe and see the problems that can arise.
+</para>
+</sect2>
+
+</sect1><sect1><title>Utilities</title>
+
+<sect2><title>jprobe</title>
+
+<para>
+jprobe is your swiss army knife as an Ivy Java developer. Use it
+to try your regular expressions, to check the installation of the system, to
+log the messages, etc. To use it, either run <command>java
+fr.dgac.ivy.tools.Probe</command>, run the jar file directly with <command>$
+java -jar ivy.jar</command>, or use the jprobe shell script.
+</para>
+
+<para>
+The command line options ( available with the -h command line switch ) are the
+following:
+<itemizedlist>
+<listitem><para>
+-b allows you to specify the ivy bus. This overrides the -DIVY_BUS
+Java property. The default value is 127.255.255.255:2010.
+</para></listitem>
+<listitem><para>
+-n NAME allows you to specify the name of this probe agent on the bus. It
+defaults to JPROBE, but it might be difficult to differentiate which jprobe
+sent which message with a handful of agents with the same name
+</para></listitem>
+<listitem><para>
+-q allows you to spawn a silent jprobe, with no terminal output
+</para></listitem>
+<listitem><para>
+-s sends to self ( default off ), allows subscription to its own messages
+</para></listitem>
+<listitem><para>
+-n NEWNAME changes JPROBE default Ivy name to another one, which can prove to
+be useful when running different probes
+</para></listitem>
+<listitem><para>
+-t add timestamps to messages
+</para></listitem>
+<listitem><para>
+-d allows you to use JPROBE on debug mode. It is the same as setting the
+VY_DEBUG property ( java -DIVY_DEBUG fr.dgac.ivy.tools.Probe is the same as java
+fr.dgac.ivy.tools.Probe -d )
+</para></listitem>
+<listitem><para>
+-c MESSAGECLASS uses a message filter (see <function>Ivy.setFilter()</function>), for example
+'Word1,Word2,Word3'
+</para></listitem>
+<listitem><para>
+-h dumps the command line options help.
+</para></listitem>
+</itemizedlist>
+</para>
+
+<para>
+The run time commands are preceded by a single dot (.) at the beginning of the
+line. Issue ".help" at the prompt ( without the double quotes ) to have the
+list of available commands. If the lines does not begin with a dot, jprobe tries
+to send the message to the other agents, if their subscriptions allows it. The
+dot commands are the following
+<itemizedlist>
+<listitem><para>
+.die CLIENTNAME issues an ivy die command, presumably forcing the first agent
+with this name to leave the bus
+</para></listitem>
+<listitem><para>
+.bye (or .quit) forces the JPROBE application to exit. This is the same as inputting an end of file character on a single input line ( ^D ).
+</para></listitem>
+<listitem><para>
+.direct client id message sends the direct message to the remote client, using
+the numeric id
+</para></listitem>
+<listitem><para>
+.bind REGEXP and .unbind REGEXP will change Probe's subscription
+</para></listitem>
+<listitem><para>
+.list gives the list of clients seen on the ivy bus
+</para></listitem>
+<listitem><para>
+.bound AGENT lists the regexps the AGENT has subscribed to. You can use .bound
+* to get the whole list.
+</para></listitem>
+<listitem><para>
+.time COUNT MSG sends the MSG COUNT times and displays the elapsed time
+</para></listitem>
+<listitem><para>
+.ping CLIENT measures the time it takes to reach a client
+</para></listitem>
+</itemizedlist>
+</para>
+</sect2>
+
+<sect2><title>IvyDaemon</title>
+<para>
+As the launching and quitting of an ivy bus is a bit slow, it is not
+convenient to spawn an Ivy client each time we want to send a simple message.
+To do so, we can use the IvyDaemon, which is a TCP daemon sitting and waiting
+on the port 3456, and also connected on the default bus. Each time a remote
+application connects to this port, every line read until EOF will be forwarded
+on the bus. The standard port and bus domain can be overridden by command line
+switches ( use <command>$ java fr.dgac.ivy.tools.IvyDaemon -h</command> ).
+First, spawn an ivy Damon: <command>$ java fr.dgac.ivy.tools.IvyDaemon</command>
+then, within your shell scripts, use a short TCP connexion ( for instance
+netcat ): <command>$ echo "hello world" | nc -q 0 localhost 3456</command>
+The "hello world" message will be sent on the default Ivy Bus to anyone having
+subscribe to a matching pattern</para>
+</sect2>
+
+<sect2><title>jafter</title>
+<para>
+jafter ( or fr.dgac.ivy.tools.JAfter ) is a simple utility that can be used
+within shell script. The rationale is to block the processing until a specific
+message is received, then continue. This can be used to wait for a ready
+message before lauching another agent. The jafter program can wait forever or
+timeout. It the timeout is triggered, a negative value is returned to the
+shell.
+</sect2>
+
+</sect1><sect1><title>programmer's style guide</title>
+<para>
+There are many specific programming patterns in Ivy. Some of them are Ivy
+related, some are java related. See the jprobe source code to get an example
+of some programming patterns. Here are some of them, to be completed later...
+</para>
+
+<sect2><title>join the right bus</title>
+<para>
+To join the right bus, you have to honor the IVYBUS property. It is a good way
+to let the system get it, and an ever better way to override it with command
+line options (e.g.: -b :3110). Here is a snippet to perform this task:
+<programlisting>
+import fr.dgac.ivy.* ;
+import gnu.getopt.Getopt;
+
+public static void main(String[] args) throws IvyException {
+    Getopt opt = new Getopt("After",args,"b:"); // add more options ...
+    String domain=Ivy.getDomain(null); // gets IVYDOMAIN from property
+    // or, if none is set, defaults to Ivy.DEFAULT_DOMAIN
+    while ((c = opt.getopt()) != -1) switch (c) {
+      case 'b': domain=opt.getOptarg(); break; // overrides
+      // and more options
+      default: System.out.println(helpmsg); System.exit(0);
+    }
+    Ivy bus=new Ivy(name,name+" ready",null);
+    bus.start(domain); // sets the properties for children processes ...
+}
+</programlisting>
+
+</para>
+</sect2>
+
+<sect2><title>nice regular expressions</title>
+<para>
+To avoid CPU consuming pattern matching operation, be sure to use bounded
+regexps as much as possible. For instance, if we consider the regexp1 "^coord
+x=(\d+)", the regexp2 "x=(\d+)" and the message msg "coord x=12 y=15". When
+another agent sends the message msg, both regexp will match and trigger the
+callback with on argument, the string "12". However, when another message is
+sent, the regexp1 will fail as soon as possible, probably the very first
+character, but the regexp2 will do some processing before failing.
+</para>
+</sect2>
+
+<sect2><title>Something's not working</title>
+<para>
+To trace the behaviour of an heavily multithread application is quite tedious,
+especially when it's connected to others. The easiest path is to use the
+built-in basic tracing mechanism provided by Ivy : run your jvm with the
+-DIVY_DEBUG property set. Use jprobe to monitor what's going on with the
+greedy regexp '(.*)' in a separate terminal. If in doubt, just join the Ivy mailing
+list.
+</para>
+</sect2>
+
+<sect2><title>time consuming callbacks</title>
+<para>
+For each remote agent, the Ivy object has an IvyClient with a dedicated
+working thread. This thread deals with the Ivy protocol coding and decoding,
+and performs the callbacks. If your agent has time consuming callbacks,
+involving CPU, or long IO, or so, then it might be better to run each callback
+in a dedicated thread. You can write this yourself, or just use the
+<function>Ivy.bindAsyncMsg()</function> function. The problem is that there is
+a slight overhead in thread management.
+</para>
+</sect2>
+
+<sect2><title>how to perform requests</title>
+<para>
+When agent A needs to make a request to another agent B, you
+can use the following pattern:
+<itemizedlist>
+<listitem><para>B has subscribed to ^MyRequest ID=([^ ]+) QUERY=(.*)<para></listitem>
+<listitem><para>A subscribes to ^MyResult ID=someSpecificId RESULT=(.*)<para></listitem>
+<listitem><para>A send to MyRequest ID=someSpecificId QUERY=2+2<para></listitem>
+<listitem><para>B receives, computes the results, then sends MyResult ID=someSpecificId RESULT=4<para></listitem>
+<listitem><para>A receives, and unsubscribes to his subscription<para></listitem>
+</itemizedlist>
+</para>
+
+<para>To program this, you have to get a gentle way of choosing the
+specificId, associate this to the subscription number returned by
+Ivy.bindMsg(), and add code within the callback to perform the unsubscription.
+Moreover, you have to be sure that there are not two "B type" agents on the
+bus, otherwise you'll eventually perform your callback twice if the results
+are sent during the short lapse of time before unsubscription.
+</para>
+
+<para>The preferred way is to to let the API provide this singleton mechanism
+with <function>Ivy.getWBUID()</function> function returning an unique ID, and
+the <function>Ivy.bindMsgOnce()</function> that handles all the mechanisms
+ensuring that the callback will be run on time only, and that the
+unsubscription will take place.
+<programlisting>
+  String id = bus.getWBUID(); // a more or less unique ID
+  bus.bindMsgOnce("MyResult ID="+id+" RESULT=(.*)",{
+    public void receive(IvyClient ic,String[] args) {
+      System.out.println("2+2="+args[0]);
+      // the unsubscription is done for me
+    }
+  });
+  bus.sendMsg("MyRequest ID="+id+" QUER=2+2");
+</programlisting>
+</para>
+</sect2>
+
+<sect2><title>how to quit the application ?</title>
+<para>
+If your application decides to quit or leave the bus, the safest way is to
+invoque <function>Ivy.stop()</function>. This will send a clean goodby message
+to the other agents, close the sockets, end the threads, etc. However, you can
+en the JVM performing a <function>System.exit(int)</function> and let the
+other agents realize that you've gone.
+</para>
+<para>
+If some other agents wants you to quit the bus, it will send you a die
+message. The protocol will first run you
+<function>IvyApplicationListener.die()</function>, if any, then
+perform some socket/thread clean up, and disconnect you from the bus. As a
+good citizen on the Ivy bus, you should take the appropriate measures top stop
+your application within the <function>IvyApplicationListener.die()</function>
+method, for instance run <function>System.exit()</function> or make all you
+thread stop, disposing your toplevel Swing Frames. Here is an example of how to do it:
+<programlisting>
+import fr.dgac.ivy.* ;
+import javax.swing.*;
+
+public class EndApp extends IvyApplicationAdapter {
+
+  public static void main(String[] args) throws IvyException {
+    Ivy bus=new Ivy("EndApp","EndApp ready",null);
+    EndApp e = new EndApp(bus); // a frame is opened, and the Swing Thread is started
+    bus.addApplicationListener(e);
+    bus.start(Ivy.getDomain(null));  // Ivy threads are up and running
+    // the control flow won't stop until the end of all above threads
+  }
+
+  private Ivy bus;
+  JFrame f;
+
+  public EndApp(Ivy b) {
+    this.bus=b;
+    f=new JFrame("test");
+    f.getContentPane().add(new JLabel("some label"),java.awt.BorderLayout.CENTER);
+    f.pack();
+    f.setVisible(true);
+  }
+
+  public void die(IvyClient client, int id,String msgarg) {
+    System.out.println("received die msg from " + client.getApplicationName());
+    f.dispose(); // closes the only window, thus quitting the swing thread
+  } // end of die callback, the Ivy threads are stopped
+
+}
+</programlisting>
+</para>
+</sect2>
+
+</sect1>
+
+<sect1><title>Contacting the authors</title>
+<para>
+For bug reports or comments on the library itself or about this document,
+please me an email at <email>yannick.jestin@enac.fr</email>. For comments and ideas about Ivy itself (protocol, applications, etc), please join and use the 
+<ulink url="http://www.eei.cena.fr/products/ivy/contact.html">Ivy mailing list</ulink>
+</para>
+
+<para>
+If you report a bug, try to identify the causal path leading to the
+bug, and submit a trace of the problem, if possible, using the -DIVY_DEBUG
+property to produce a trace of the ivy execution.
+</para>
+</sect1>
+
+</article> 

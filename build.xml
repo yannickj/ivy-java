@@ -1,0 +1,169 @@
+<project name="ivy-java" basedir="." default="main">
+
+    <property name="version"     value="1.2.18"/>
+    <property name="defaultbus"  value="-DIVYBUS=224:2010" />
+
+    <property name="src.dir"     value="src"/>
+    <property name="testsrc.dir"     value="tests"/>
+    <property name="build.dir"   value="build"/>
+    <property name="classes.dir" value="${build.dir}/classes"/>
+    <property name="testclasses.dir" value="${build.dir}/testclasses"/>
+    <property name="jar.dir"     value="${build.dir}/jar"/>
+    <property name="main-class"  value="fr.dgac.ivy.tools.Probe"/>
+    <property name="tgz.dir"    value="${build.dir}/${ant.project.name}-${version}" />
+
+    <!--
+      LOCAL SETTINGS
+      should be overriden to reflect your installation.
+    -->
+    <property name="jars.home" value="/opt/local/share/java/"/>
+    <property name="servlet.jar" value="javax.servlet-api-3.0.1.jar"/>
+    <property name="getopt.jar" value="java-getopt-1.0.14.jar"/>
+    <property name="checkstyle.jar" value="checkstyle-10.16.0-all.jar"/>
+    <property name="docbook-xsl"    value="/usr/local/Cellar/docbook-xsl/1.79.2_1/docbook-xsl" />
+    <property name="xslt.jar" value="${docbook-xsl}/extensions/xalan.jar"/>
+    <!--
+    <property name="fop.home" value="${jars.home}/fop/"/>
+    <property name="jsch.jar" value="${jars.home}/jsch.jar"/>
+    --> 
+
+    <path id="classpath">
+        <fileset dir="${jar.dir}" includes="**/*.jar"/>
+	<fileset dir="${jars.home}" includes="**/${getopt.jar}"/>
+	<fileset dir="${jars.home}" includes="**/${servlet.jar}"/>
+    </path>
+
+    <path id="myjar">
+        <fileset dir="${jar.dir}" includes="**/*.jar"/>
+    </path>
+
+    <target name="init">
+        <mkdir dir="${build.dir}"/>
+        <mkdir dir="${classes.dir}"/>
+        <mkdir dir="${testclasses.dir}"/>
+        <mkdir dir="${jar.dir}"/>
+	<mkdir dir="${build.dir}/doc"/>
+	<mkdir dir="${build.dir}/doc/api"/>
+    </target>
+
+    <target name="clean">
+        <delete dir="${build.dir}"/>
+    </target>
+
+    <target name="compile" depends="init">
+      <javac includeantruntime="true" srcdir="${src.dir}" destdir="${classes.dir}"
+	deprecation="on"
+	classpathref="classpath"/>
+      <jar destfile="${jar.dir}/${ant.project.name}.jar" basedir="${classes.dir}">
+	  <manifest>
+	      <attribute name="Main-Class" value="${main-class}"/>
+	  </manifest>
+	  <fileset dir="." includes="README,LICENCE,BUGS,Changelog"/>
+	  <zipgroupfileset dir="${jars.home}" includes="**/${getopt.jar}"/>
+      </jar>
+    </target>
+
+    <target name="tests" depends="compile">
+        <javac includeantruntime="true" srcdir="${testsrc.dir}" destdir="${testclasses.dir}" classpathref="myjar"/>
+    </target>
+
+    <target name="style">
+	<java fork="true" classname="com.puppycrawl.tools.checkstyle.Main">
+	  <arg value="-c"/>
+	  <arg value="sun_checks.xml"/>
+	  <arg value="src/Ivy.java"/>
+	  <classpath>
+	    <path refid="classpath"/> <!-- si ça n'est pas déjà dans le classpath -->
+	    <path location="../checkstyle-5.5/checkstyle-5.5.jar"/>
+	  </classpath>
+	</java>
+    </target>
+
+    <target name="dist" depends="compile" >
+	<jar destfile="${jar.dir}/${ant.project.name}-${version}.jar" basedir="${classes.dir}">
+            <manifest>
+                <attribute name="Main-Class" value="${main-class}"/>
+            </manifest>
+	    <zipgroupfileset dir="${jars.home}" includes="**/${getopt.jar}"/>
+            <fileset dir="." includes="build.xml,Makefile,java.mk,manifest,README,LICENCE,Changelog,BUGS" />
+	    <fileset dir="src" includes="**/*.java" />
+	    <fileset dir="tests" includes="tests/*.java" />
+	    <fileset dir="examples" includes="tests/*.java, tests/*.xml, tests/*.txt" />
+	    <fileset dir="doc" includes="doc/html/api/*" />
+        </jar>
+    </target>
+
+    <target name="doc" depends="init">
+
+      <!-- library guide PDF -->
+      <xslt basedir="doc" destdir="${build.dir}/doc/" extension=".fo" classpathref="classpath"
+	includes="ivy-java.sgml"
+	style="${docbook-xsl}/fo/docbook.xsl">
+	<classpath location="${xslt.jar}" />
+      </xslt>
+
+      <property name="fop.home" value="${jars.home}/fop"/>
+      <taskdef name="fop" 
+        classname="org.apache.fop.tools.anttasks.Fop">
+        <classpath>
+	    <fileset dir="${fop.home}/lib">
+		<include name="*.jar"/>
+	    </fileset>
+	    <fileset dir="${fop.home}/build">
+		<include name="*.jar"/>
+	    </fileset>
+	</classpath>
+      </taskdef>
+      <fop format="application/pdf" fofile="${build.dir}/doc/ivy-java.fo" outfile="${build.dir}/doc/ivy-java.pdf" />
+
+      <!-- JAVADOC -->
+      <javadoc packagenames="fr.dgac.ivy.*" sourcepath="${src.dir}"
+	destdir="${build.dir}/doc/api/" defaultexcludes="yes" classpathref="classpath"
+	public="true" use="true" windowtitle="Ivy Java API">
+	<fileset dir="src" includes="**/*.java" />
+      </javadoc>
+
+      <!-- library guide HTML MULTIPLE FILES 
+      <xslt basedir="doc" destdir="${build.dir}/doc/html" extension=".html"
+	in="doc/ivy-java.sgml" 
+	out="${build.dir}/doc/html/"
+	style="${docbook-xsl}/xhtml/docbook.xsl">
+	<classpath location="${xslt.jar}" />
+      </xslt>
+      -->
+
+    </target>
+
+    <target name="tar">
+      <delete file="${tgz.dir}.tar.gz" />
+      <tar destfile="${tgz.dir}.tar.gz" compression="gzip">
+	<tarfileset dir="." includes="${src.dir}/*.java"  prefix="ivy-java/"/>
+	<tarfileset dir="." includes="${testsrc.dir}/*.java"  prefix="ivy-java/"/>
+	<tarfileset dir="." includes="${testsrc.dir}/Makefile"  prefix="ivy-java/"/>
+	<tarfileset dir="." includes="examples/*.java"  prefix="ivy-java/"/>
+	<tarfileset dir="." includes="examples/*.xml"  prefix="ivy-java/"/>
+	<tarfileset dir="." includes="examples/*.txt"  prefix="ivy-java/"/>
+	<tarfileset dir="." includes="examples/*.java"  prefix="ivy-java/"/>
+	<tarfileset dir="." includes="doc/*.dgml"  prefix="ivy-java/"/>
+	<tarfileset dir="." includes="doc/*.1"  prefix="ivy-java/"/>
+	<tarfileset dir="." includes="doc/Makefile"  prefix="ivy-java/"/>
+	<fileset dir="." includes="build.xml,Makefile,java.mk,manifest,README,LICENCE,Changelog,BUGS" />
+      </tar>
+    </target>
+
+    <target name="run" depends="compile">
+	<java fork="true" classname="${main-class}">
+	  <jvmarg value="${defaultbus}"/>
+	  <jvmarg value="-Djava.net.preferIPv4Stack=true"/>
+	  <arg value="(.*)"/>
+	  <classpath>
+	    <path refid="classpath"/>
+	    <path location="${jar.dir}/${ant.project.name}.jar"/>
+	  </classpath>
+	</java>
+    </target>
+
+    <target name="clean-build" depends="clean"/>
+    <target name="main" depends="clean,run"/>
+
+</project>

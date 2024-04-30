@@ -1,0 +1,60 @@
+.\" '\"
+.\" '\" Ivy jafter, a small shell script waiting for a message on the Ivy bus
+.\" '\"
+.\" '\" Copyright (C) 1997-2006
+.\" '\" DSNA/DTI/SDER ( Centre d'Études de la Navigation Aérienne )
+.\" '\" Copyright (C) 2007-2009
+.\" '\" ENAC (Ecole Nationale de l'Aviation Civile)
+.\" '\"
+.\" '\" See the file "license.terms" for information on usage and redistribution
+.\" '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+.\" '\" 
+.\" '\" 
+.TH "jafter" "" "" "Yannick Jestin <Yannick.Jestin@enac.fr>" ""
+.SH "NAME"
+jafter \- a Ivy java agent waiting for a message on the bus
+
+.SH "SYNOPSIS"
+
+ jafter [options] regexp
+
+.SH OPTIONS
+
+ -b BUS  specifies the Ivy bus domain
+ -t      time out in seconds ( defaults to 0, waits forever )
+ -h      help
+
+  regexp is the regular expression you're waiting for. 
+
+.SH "DESCRIPTION"
+
+  fr.dgac.ivy.tools.After is a small class dedicated to using Ivy within shell
+  scripts.
+
+  regexp is the regular expression you're waiting for. The program will exit
+  and return 0 to the parent shell once it has been received on the bus, or
+  with an error if you set a timeout.
+
+.SH EXAMPLES
+.B jafter -t 5 'hello.*world'
+
+will hang until it receives a hello world on the default bus, and then exit
+silently and return 0. If no message is received within 5 seconds, it will die
+and return -1
+
+.SH "BUGS"
+See the /usr/share/doc/libivy-java/BUGS file for details.
+
+.SH "AUTHORS"
+.nf 
+Yannick Jestin <yannick.jestin@enac.fr>
+.SH "SEE ALSO"
+.nf 
+jprobe (1)
+.nf
+pcrepattern (3)
+.sp
+For further details, please refer to the Ivy html page at http://www.eei.cena.fr/products/ivy/
+
+.SH "NOTES"
+In case of any comment or bug report on this library, please contact yannick.jestin@enac.fr

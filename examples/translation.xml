@@ -1,0 +1,7 @@
+<translations>
+  <translate from="HR-barlu:0.0: reco=BackSpace" to="gesture left"/>
+  <translate from="HR-barlu:0.0: reco=space" to="gesture right"/>
+  <translate from="HR-barlu:0.0: reco=i" to="gesture down"/>
+  <translate from="HR-barlu:0.0: reco=Shift_L" to="gesture up"/>
+  <translate from="HR-barlu:0.0: reco=a" to="gesture up"/>
+</translations>

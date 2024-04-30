@@ -1,0 +1,4 @@
+"HR-barlu:0.0: reco=BackSpace" "gesture left"
+"HR-barlu:0.0: reco=space" "gesture right"
+"HR-barlu:0.0: reco=i" "gesture down"
+"HR-barlu:0.0: reco=Shift_L" "gesture up"

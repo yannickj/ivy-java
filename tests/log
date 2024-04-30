@@ -1,0 +1,136 @@
+*****************************
+TEST ASYNC
+*****************************
+java -DIVY_DEBUG  -classpath ../build/testclasses:../build/jar/ivy-java.jar:/Users/yann/dev/bundle AsyncAPI -r -l 5 -d 1 -s 10 -b 224.5.6.7:8910
+bus:224.5.6.7:8910 loop:5 delay:1 verbose:true asyncBind:true asyncSend:false msgsize:10
+-->Ivy[0]<-- setStarting true
+-->Ivy[0]<-- lib: 1.2.16 protocol: 3 TCP service open on port 53403
+-->Ivy[0]<-- service thread started
+-->IvyWatcher[0,0]<-- Thread started
+-->IvyWatcher[0,0]<-- beginning of a watcher Thread
+-->Ivy[1]<-- setStarting true
+-->IvyWatcher[0,0]<-- PacketSender thread started
+-->Ivy[1]<-- lib: 1.2.16 protocol: 3 TCP service open on port 53404
+-->Ivy[1]<-- service thread started
+-->Ivy[0]<-- setStarting true
+-->IvyWatcher[1,1]<-- Thread started
+-->IvyWatcher[1,1]<-- beginning of a watcher Thread
+-->Ivy[1]<-- setStarting true
+-->IvyWatcher[1,1]<-- PacketSender thread started
+-->IvyWatcher[0,0]<-- there's an appId: ID<MSreceive0:1337074788899:-696159721>
+-->IvyWatcher[1,1]<-- broadcast accepted from localhost:8910, port:53403, protocol version:3
+-->IvyWatcher[0,0]<-- ignoring my own broadcast
+-->IvyWatcher[1,1]<-- no known agent originating from localhost/127.0.0.1:53403
+-->Ivy[0]<-- setStarting false
+-->Ivy[0]<-- setStarting true
+-->IvyWatcher[0,0]<-- broadcast accepted from localhost:8910, port:53404, protocol version:3
+-->IvyWatcher[0,0]<-- no known agent originating from localhost/127.0.0.1:53404
+-->Ivy[1]<-- setStarting true
+-->Ivy[0]<-- setStarting true
+-->Ivy[0]<-- setStarting true
+-->Ivy[1]<-- setStarting true
+-->IvyClient[1,0] MSreceive (remote none)<-- incoming connection on Socket[addr=/127.0.0.1,port=53405,localport=53403]
+-->IvyClient[0,1] MSsend (remote none)<-- outgoing connection on Socket[addr=localhost/127.0.0.1,port=53403,localport=53405]
+-->IvyClient[3,1] MSsend (remote none)<-- incoming connection on Socket[addr=/127.0.0.1,port=53406,localport=53404]
+-->IvyClient[2,0] MSreceive (remote none)<-- outgoing connection on Socket[addr=localhost/127.0.0.1,port=53404,localport=53406]
+-->IvyClient[1,0] MSreceive (remote none)<-- Thread started
+-->Ivy[1]<-- added IC[0,1] MSsend:none:53403 in half: (none,)
+-->Ivy[0]<-- added IC[2,0] MSreceive:none:53404 in half: (none,)
+-->IvyClient[0,1] MSsend (remote none)<-- sending our service port 53404
+-->IvyClient[1,0] MSreceive (remote none)<-- connection established with localhost:53405
+-->IvyClient[3,1] MSsend (remote none)<-- Thread started
+-->IvyClient[2,0] MSreceive (remote none)<-- sending our service port 53403
+-->IvyClient[3,1] MSsend (remote none)<-- connection established with localhost:53406
+-->Ivy[1]<-- setStarting true
+-->IvyClient[0,1] MSsend (remote none)<-- Thread started
+-->IvyClient[0,1] MSsend (remote none)<-- connection established with localhost:53403
+-->IvyWatcher[1,1]<-- there's an appId: ID<MSsend1:1337074788900:639472446>
+-->IvyWatcher[1,1]<-- ignoring my own broadcast
+-->Ivy[1]<-- setStarting false
+-->IvyClient[2,0] MSreceive (remote none)<-- Thread started
+-->IvyClient[2,0] MSreceive (remote none)<-- connection established with localhost:53404
+-->IvyClient[1,0] MSreceive (remote MSsend)<-- the peer sent his service port: 53404
+-->IvyClient[3,1] MSsend (remote MSreceive)<-- the peer sent his service port: 53403
+-->Ivy[0]<-- added IC[1,0] MSreceive:MSsend:53404 in half: (MSsend,none,)
+-->Ivy[1]<-- added IC[3,1] MSsend:MSreceive:53403 in half: (none,MSreceive,)
+-->IvyClient[1,0] MSreceive (remote MSsend)<-- sending our service port 53403
+-->IvyClient[3,1] MSsend (remote MSreceive)<-- sending our service port 53404
+-->Ivy[1]<-- removed IC[3,1] MSsend:MSreceive:53403 from half: (none,)
+-->Ivy[1]<-- setStarting false
+-->Ivy[1]<-- added IC[3,1] MSsend:MSreceive:53403 in clients: (MSreceive,)
+-->IvyClient[2,0] MSreceive (remote MSsend)<-- the peer sent his service port: 53404
+-->Ivy[0]<-- removed IC[1,0] MSreceive:MSsend:53404 from half: (MSsend,)
+-->Ivy[0]<-- setStarting false
+-->IvyClient[0,1] MSsend (remote MSreceive)<-- the peer sent his service port: 53403
+MSreceive is here, sending packets
+-->Ivy[0]<-- added IC[1,0] MSreceive:MSsend:53404 in clients: (MSsend,)
+-->Ivy[0]<-- removed IC[2,0] MSreceive:MSsend:53404 from half: ()
+-->Ivy[0]<-- setStarting false
+-->Ivy[0]<-- added IC[2,0] MSreceive:MSsend:53404 in clients: (MSsend,MSsend,)
+-->Ivy[1]<-- removed IC[0,1] MSsend:MSreceive:53403 from half: ()
+-->Ivy[1]<-- setStarting false
+[11:39:48 AM] SENDER sending packet 1
+-->Ivy[1]<-- added IC[0,1] MSsend:MSreceive:53403 in clients: (MSreceive,MSreceive,)
+-->Ivy[1]<-- sending ASYNCPACKET1 aaaaaaaaaa
+-->Ivy[1]<-- end sending ASYNCPACKET1 aaaaaaaaaa to 2 clients
+-->IvyClient[1,0] MSreceive (remote MSsend)<--  string array 2 elements: (1) (aaaaaaaaaa) 
+-->IvyClient[2,0] MSreceive (remote MSsend)<--  string array 2 elements: (1) (aaaaaaaaaa) 
+[11:39:48 AM] SENDER sending packet 2
+-->Ivy[1]<-- sending ASYNCPACKET2 aaaaaaaaaa
+-->Ivy[1]<-- end sending ASYNCPACKET2 aaaaaaaaaa to 2 clients
+[11:39:48 AM] SENDER sending packet 3
+-->Ivy[1]<-- sending ASYNCPACKET3 aaaaaaaaaa
+-->Ivy[1]<-- end sending ASYNCPACKET3 aaaaaaaaaa to 2 clients
+[11:39:48 AM] SENDER sending packet 4
+-->Ivy[1]<-- sending ASYNCPACKET4 aaaaaaaaaa
+-->Ivy[1]<-- end sending ASYNCPACKET4 aaaaaaaaaa to 2 clients
+[11:39:48 AM] SENDER sending packet 5
+-->Ivy[1]<-- sending ASYNCPACKET5 aaaaaaaaaa
+-->IvyClient[1,0] MSreceive (remote MSsend)<--  string array 2 elements: (2) (aaaaaaaaaa) 
+-->Ivy[1]<-- end sending ASYNCPACKET5 aaaaaaaaaa to 2 clients
+-->IvyClient[2,0] MSreceive (remote MSsend)<--  string array 2 elements: (2) (aaaaaaaaaa) 
+[11:39:48 AM] RECEIVE 1/5 packets received arg:(1)
+[11:39:48 AM] SENDER sender has sent all its packets, waiting for a die message
+[11:39:48 AM] RECEIVE 2/5 packets received arg:(1)
+-->IvyClient[1,0] MSreceive (remote MSsend)<--  string array 2 elements: (3) (aaaaaaaaaa) 
+RECEIVE Sleeping 1ms
+RECEIVE *** ERROR *** 2!=1 - probable double connexion
+-->IvyClient[2,0] MSreceive (remote MSsend)<--  string array 2 elements: (3) (aaaaaaaaaa) 
+client: IC[1,0] MSreceive:MSsend:53404
+client: IC[2,0] MSreceive:MSsend:53404
+-->IvyClient[1,0] MSreceive (remote MSsend)<--  string array 2 elements: (4) (aaaaaaaaaa) 
+-->IvyClient[2,0] MSreceive (remote MSsend)<--  string array 2 elements: (4) (aaaaaaaaaa) 
+-->IvyClient[3,1] MSsend (remote MSreceive)<-- received die Message from MSreceive
+-->Ivy[1]<-- removed IC[3,1] MSsend:MSreceive:53403 from clients: (MSreceive,)
+-->Ivy[1]<-- beginning stopping
+-->Ivy[0]<-- beginning stopping
+RECEIVE Finished Sleeping
+-->Ivy[0]<-- setStarting false
+-->Ivy[1]<-- setStarting false
+-->IvyWatcher[0,0]<-- PacketSender thread stopped
+-->IvyWatcher[1,1]<-- PacketSender thread stopped
+-->Ivy[1]<-- service thread stopped
+-->IvyWatcher[1,1]<-- begining stopping
+-->Ivy[1]<-- setStarting true
+-->Ivy[0]<-- service thread stopped
+-->IvyWatcher[0,0]<-- begining stopping
+-->Ivy[0]<-- setStarting true
+-->IvyWatcher[1,1]<-- Thread stopped
+-->Ivy[1]<-- setStarting false
+-->IvyWatcher[1,1]<-- stopped
+-->IvyClient[0,1] MSsend (remote MSreceive)<-- closing connexion to MSreceive
+-->Ivy[0]<-- setStarting false
+-->IvyWatcher[0,0]<-- Thread stopped
+-->Ivy[1]<-- end stopping
+-->IvyWatcher[0,0]<-- stopped
+-->IvyClient[0,1] MSsend (remote MSreceive)<-- abnormally Disconnected from localhost:53403
+-->IvyClient[3,1] MSsend (remote MSreceive)<-- closing connexion to MSreceive
+-->IvyClient[0,1] MSsend (remote MSreceive)<-- normally Disconnected from MSsend
+-->IvyClient[1,0] MSreceive (remote MSsend)<-- closing connexion to MSsend
+-->Ivy[1]<-- removed IC[0,1] MSsend:MSreceive:53403 from clients: ()
+-->IvyClient[3,1] MSsend (remote MSreceive)<-- normally Disconnected from MSsend
+-->IvyClient[0,1] MSsend (remote MSreceive)<-- Thread stopped
+-->IvyClient[2,0] MSreceive (remote MSsend)<-- closing connexion to MSsend
+-->Ivy[1]<-- removed IC[3,1] MSsend:MSreceive:53403 from clients: ()
+-->IvyClient[3,1] MSsend (remote MSreceive)<-- Thread stopped
+-->Ivy[0]<-- end stopping
