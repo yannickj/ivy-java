@@ -29,6 +29,7 @@
 package fr.dgac.ivy ;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Vector;
 import java.util.Collections;
 import java.util.regex.*;
 
@@ -36,6 +37,7 @@ public class SelfIvyClient extends IvyClient {
     
   private Ivy bus;
   private static int serial=0;		/* an unique ID for each regexp */
+  private static final int createSerial() { return serial++; }
   private Map<Integer,IvyMessageListener> callbacks=
     Collections.synchronizedMap(new HashMap<Integer,IvyMessageListener>());
   private Map<Integer,BindType> threadedFlag=
@@ -56,7 +58,7 @@ public class SelfIvyClient extends IvyClient {
     // creates a new binding (regexp,callback)
     try {
       Pattern re=Pattern.compile(sregexp,Pattern.DOTALL);
-      Integer key = serial++;
+      Integer key = createSerial();
       regexps.put(key,re);
       regexpsText.put(key,sregexp);
       synchronized (callbacks) {
@@ -104,9 +106,9 @@ public class SelfIvyClient extends IvyClient {
   protected int sendSelfMsg(String message) {
     int count = 0;
     traceDebug("trying to send to self the message <"+message+">");
-    for (Integer key : regexps.keySet() ) {
-      Pattern regexp = regexps.get(key);
-      String sre = regexpsText.get(key);
+    for (var r : regexps.entrySet() ) {
+      Pattern regexp = regexps.get(r.getKey());
+      String sre = regexpsText.get(r.getKey());
       synchronized(regexp) {
 	traceDebug("checking against: "+sre);
 	Matcher m = regexp.matcher(message);
@@ -116,7 +118,7 @@ public class SelfIvyClient extends IvyClient {
 	}
 	traceDebug("checking against: "+sre+" succeeded");
 	count++;
-	callCallback(this,key,toArgs(m));
+	callCallback(this,r.getKey(),toArgs(m));
       }
     }
     return count;
@@ -136,11 +138,13 @@ public class SelfIvyClient extends IvyClient {
     switch (type) {
      case NORMAL:
        // runs the callback in the same thread
-       callback.receive(client, tab); // can tab can be faulty ?! TODO
+       callback.receive(client, tab);
        break;
      case ASYNC:
-       // starts a new Thread for each callback ... ( Async API )
-       new Runner(callback,client,tab);
+       Thread.startVirtualThread( () -> {
+	   Thread.currentThread().setName("Ivy Runner Thread to execute an async callback");
+	  callback.receive(client,tab);
+      });
        break;
      case SWING:
        // deferes the callback to the Event Dispatch Thread
@@ -181,28 +185,6 @@ public class SelfIvyClient extends IvyClient {
     public void run() { cb.receive(c,args); }
   }
 
-  // a class to perform the threaded execution of each new message
-  // this is an experimental feature introduced in 1.2.4
-  class Runner implements Runnable {
-    IvyMessageListener cb;
-    IvyClient c;
-    String[] args;
-    private Thread t;
-    public Runner(IvyMessageListener cb,IvyClient c,String[] a) {
-      this.cb=cb;
-      this.c=c;
-      args=a;
-      //t=new Thread(Runner.this);
-      //bus.registerThread(t);
-      //t.start();
-      bus.getPool().execute(Runner.this);
-      //bus.unRegisterThread(t);
-    }
-    public void run() {
-      Thread.currentThread().setName("Ivy Runner Thread to execute an async callback");
-      cb.receive(c,args);
-    }
-  } // class Runner
 
   private void traceDebug(String s){
     if (debug)

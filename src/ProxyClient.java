@@ -71,7 +71,7 @@ class ProxyClient extends Ivy {
         servicePort = Integer.parseInt(s=opt.getOptarg());
       } catch (NumberFormatException nfe) {
         System.out.println("Invalid port number: " + s );
-	throw new RuntimeException();
+	System.exit(-1);
       }
       break;
     case 'h':
@@ -85,11 +85,11 @@ class ProxyClient extends Ivy {
     } catch (IvyException ie) {
       System.out.println("error, can't connect to Ivy");
       ie.printStackTrace();
-      throw new RuntimeException();
+      System.exit(-1);
     } catch (IOException ioe) {
       System.out.println("error, can't connect to the proxy master");
       ioe.printStackTrace();
-      throw new RuntimeException();
+      System.exit(-1);
     }
   }
 
@@ -120,7 +120,7 @@ class ProxyClient extends Ivy {
     } catch ( PatternSyntaxException res ) {
       res.printStackTrace();
       System.out.println("Regular Expression bug in Ivy source code ... bailing out");
-      throw new RuntimeException();
+      System.exit(-1);
     }
   }
 
@@ -157,7 +157,7 @@ class ProxyClient extends Ivy {
       } catch (IOException ioe) {
         traceDebug("Subreader exception ...");
         ioe.printStackTrace();
-	throw new RuntimeException();
+	System.exit(-1);
       }
       traceDebug("Subreader Thread stopped");
       System.out.println("connexion to ProxyMaster lost");
@@ -185,7 +185,7 @@ class ProxyClient extends Ivy {
         // this new Ivy agent is in fact one of my puppets ...
 	System.out.println("not Ghosting this (probable) Puppet Ivy agent");
 	i= new IvyClient(this,s,port,domachin);
-	p.bus.getPool().execute(i);
+	Thread.startVirtualThread(i);
 	return true;
       }
     }
@@ -199,7 +199,8 @@ class ProxyClient extends Ivy {
       return true;
     } catch (InterruptedException ie) { ie.printStackTrace(); }
     System.out.println("error waiting");
-    throw new RuntimeException();
+    System.exit(-1);
+    return false;
   }
 
   /*

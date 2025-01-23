@@ -25,7 +25,7 @@ package fr.dgac.ivy.tools ;
 import fr.dgac.ivy.* ;
 import gnu.getopt.Getopt;
 
-public class After extends IvyApplicationAdapter implements IvyMessageListener {
+public class After extends IvyApplicationAdapter {
 
   public final static int DEFAULTTIMEOUT = 0 ;
 
@@ -38,19 +38,25 @@ public class After extends IvyApplicationAdapter implements IvyMessageListener {
     String name = "AFTER";
     int timeout = DEFAULTTIMEOUT;
     while ((c = opt.getopt()) != -1) switch (c) {
-      case 'b': domain = opt.getOptarg(); break;
-      case 't': timeout = Integer.parseInt(opt.getOptarg()); break;
-      case 'h':
-      default: System.out.println(helpmsg); return;
+      case 'b' -> domain = opt.getOptarg();
+      case 't' -> timeout = Integer.parseInt(opt.getOptarg());
+      case 'h' -> System.out.println(helpmsg);
+      default -> System.out.println(helpmsg);
     }
     if (opt.getOptind() != args.length-1) { System.out.println(helpmsg); return; }
     String regexp=args[opt.getOptind()]; 
-    Ivy bus = new Ivy(name, name+" ready", null);
-    bus.bindMsgOnce(regexp, new After(bus));
+    new After(domain,name,regexp,timeout);
+  }
+
+  private Ivy bus;
+
+  public After(String domain, String name, String regexp, int timeout) throws IvyException {
+    bus = new Ivy(name, null, null);
+    bus.bindMsgOnce(regexp, (ic,args) -> { bus.stop(); });
     bus.start(domain);
     if (timeout>0) {
       System.out.println("waiting "+timeout+"s for "+regexp);
-      try { Thread.sleep(timeout*1000); } catch (InterruptedException ie) { }
+      try { Thread.sleep((int) (timeout*1000)); } catch (InterruptedException ie) { }
       System.out.println(regexp+" not received, bailing out");
       bus.stop();
     } else {
@@ -58,18 +64,9 @@ public class After extends IvyApplicationAdapter implements IvyMessageListener {
     }
   }
 
-  private Ivy bus;
-  public After(Ivy b) {
-    bus = b;
-    bus.addApplicationListener(this);
-  }
-
-  public void die( IvyClient client, int id, String msgarg) {
+  @Override
+  public void die(IvyClient client, int id, String msgarg) {
     System.out.println("die received, bailing out");
-    bus.stop();
-  }
-
-  public void receive(IvyClient ic, String[] args) {
     bus.stop();
   }
 

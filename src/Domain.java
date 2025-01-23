@@ -52,7 +52,7 @@ public class Domain {
     } catch (PatternSyntaxException res) {
       res.printStackTrace();
       System.out.println("Regular Expression bug in Ivy source code ... bailing out");
-      throw new RuntimeException();
+      System.exit(-1);
     }
   }
   
@@ -116,7 +116,7 @@ public class Domain {
       net=mm.group(1);
     } catch ( PatternSyntaxException e ){
       e.printStackTrace();
-      throw new RuntimeException();
+      System.exit(-1);
     }
     //System.out.println("next domain: "+net);
     return net;
@@ -169,7 +169,7 @@ public class Domain {
    */
   static public String domains(String toparse) {
     StringBuffer s = new StringBuffer();
-    if (toparse == null) toparse = getDomain(toparse);
+    if (toparse == null) toparse = getDomain(null);
     for (Domain dd : parseDomains(toparse)) s.append(dd.getDomainaddr() + ":" + dd.getPort() + " ");
     return s.toString();
   }

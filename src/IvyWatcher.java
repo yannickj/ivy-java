@@ -101,11 +101,12 @@ class IvyWatcher implements Runnable {
   private volatile boolean keeprunning = false;
   private Thread listenThread = null;
   private InetAddress group;
-  // FIXME should not be static ? (findbugs)
   private static int serial=0;
-  private int myserial=serial++;
+  private int myserial=createSerial();
   private String busWatcherId = null;
   private static Pattern recoucou;
+
+  private static final int createSerial() { return serial++; }
 
 
   /**
@@ -137,11 +138,12 @@ class IvyWatcher implements Runnable {
   /**
    * the behaviour of each thread watching the UDP socket.
    */
+  @Override
   public void run() {
-    traceDebug("Thread started"); // THREADDEBUG
-    listenThread=Thread.currentThread();
-    listenThread.setName("Ivy Watcher thread for "+domainaddr+":"+port);
-    // listenThread.setDaemon(true); // not possible in the treadpool ? FIXME
+    synchronized (this) {
+	listenThread=Thread.currentThread();
+	listenThread.setName("Ivy Watcher thread for "+domainaddr+":"+port);
+    }
     traceDebug("beginning of a watcher Thread");
     try {
       while( keeprunning ) {
@@ -149,11 +151,9 @@ class IvyWatcher implements Runnable {
 	  byte buf[] = new byte[256];
 	  DatagramPacket packet=new DatagramPacket(buf,buf.length);
 	  broadcast.receive(packet);
-	  bus.pushThread("UDP packet received");
 	  if ( !keeprunning ) break; // I was summoned to leave during the receive
 	  String msg = new String(buf,0,packet.getLength());
 	  boolean b = (parsePacket(packet, msg));
-	  bus.popThread("UDP packet processed");
 	  if (b) continue; else break;
 	} catch (InterruptedIOException jii ){
 	  // System.out.println("WTF UDP packet interrupted");
@@ -276,29 +276,21 @@ class IvyWatcher implements Runnable {
     traceDebug("stopped");
   }
 
-  private class PacketSender implements Runnable {
-    // do I need multiple packetsenders ? Well, there is one PacketSender per
-    // domain.
-    DatagramPacket packet;
-    String data;
-    Ivy bus;
+  synchronized void doStart() throws IvyException {
+    // String hello = Ivy.PROTOCOLVERSION + " " + bus.getAppPort() + "\n";
+    String hello = Protocol.PROTOCOLVERSION + " " + bus.getAppPort() + " "+busWatcherId+" "+bus.getSelfIvyClient().getApplicationName()+"\n";
+    if (broadcast==null) throw new IvyException("IvyWatcher PacketSender null broadcast address");
+    Thread.startVirtualThread(this);
 
-    public PacketSender(String data, Ivy b) {
-      this.data=data;
-      bus = b;
-      packet=new DatagramPacket(data.getBytes(),data.length(),group,port);
-      bus.getPool().execute( PacketSender.this );
-    }
-
-    public void run() {
-      bus.pushThread("packet sender started");
+    DatagramPacket packet=new DatagramPacket(hello.getBytes(),hello.length(),group,port);
+    Runnable r = () -> {
       traceDebug("PacketSender thread started"); // THREADDEBUG
       Thread.currentThread().setName("Ivy Packet sender");
       try {
 	broadcast.send(packet);
       } catch (InterruptedIOException e) {
 	// somebody interrupts my IO. Thread, do nothing.
-	System.out.println(e.bytesTransferred+" bytes transferred anyway, out of " + data.length());
+	System.out.println(e.bytesTransferred+" bytes transferred anyway, out of " + hello.length());
 	e.printStackTrace();
 	traceDebug("IO interrupted during the broadcast. Do nothing");
       } catch ( IOException e ) {
@@ -308,16 +300,8 @@ class IvyWatcher implements Runnable {
       }
       try { Thread.sleep(100); } catch (InterruptedException ie ){ }
       traceDebug("PacketSender thread stopped"); // THREADDEBUG
-      bus.popThread("packet sender finished"); // one of the senders has finished its work, plus extra time
-    }
-  }
-
-  synchronized void doStart() throws IvyException {
-    // String hello = Ivy.PROTOCOLVERSION + " " + bus.getAppPort() + "\n";
-    String hello = Protocol.PROTOCOLVERSION + " " + bus.getAppPort() + " "+busWatcherId+" "+bus.getSelfIvyClient().getApplicationName()+"\n";
-    if (broadcast==null) throw new IvyException("IvyWatcher PacketSender null broadcast address");
-    bus.getPool().execute(this);
-    new PacketSender(hello,bus); // notifies our arrival on each domain: protocol version + port
+    };
+    Thread.startVirtualThread(r);
   }
 
   /*
@@ -345,11 +329,11 @@ class IvyWatcher implements Runnable {
 
   static {
     try {
-      recoucou  = Pattern.compile("([0-9]+) ([0-9]+) ([^ ]*) (.*)",Pattern.DOTALL);
+      recoucou  = Pattern.compile("^(\\d+) (\\d+) ([^ ]*) (.*)",Pattern.DOTALL);
     } catch (PatternSyntaxException res) {
       res.printStackTrace();
       System.out.println("Regular Expression bug in Ivy source code ... bailing out");
-      throw new RuntimeException();
+      System.exit(-1);
     }
   }
   

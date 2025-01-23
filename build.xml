@@ -1,7 +1,6 @@
-<project name="ivy-java" basedir="." default="main">
+<project name="ivy-java" basedir="." default="compile">
 
-    <property name="version"     value="1.2.18"/>
-    <property name="defaultbus"  value="-DIVYBUS=224:2010" />
+    <property name="version"     value="1.2.19"/>
 
     <property name="src.dir"     value="src"/>
     <property name="testsrc.dir"     value="tests"/>
@@ -16,7 +15,7 @@
       LOCAL SETTINGS
       should be overriden to reflect your installation.
     -->
-    <property name="jars.home" value="/opt/local/share/java/"/>
+    <property name="jars.home" value="libs"/>
     <property name="servlet.jar" value="javax.servlet-api-3.0.1.jar"/>
     <property name="getopt.jar" value="java-getopt-1.0.14.jar"/>
     <property name="checkstyle.jar" value="checkstyle-10.16.0-all.jar"/>
@@ -52,7 +51,8 @@
 
     <target name="compile" depends="init">
       <javac includeantruntime="true" srcdir="${src.dir}" destdir="${classes.dir}"
-	deprecation="on"
+        source="23"
+	deprecation="off"
 	classpathref="classpath"/>
       <jar destfile="${jar.dir}/${ant.project.name}.jar" basedir="${classes.dir}">
 	  <manifest>
@@ -153,7 +153,6 @@
 
     <target name="run" depends="compile">
 	<java fork="true" classname="${main-class}">
-	  <jvmarg value="${defaultbus}"/>
 	  <jvmarg value="-Djava.net.preferIPv4Stack=true"/>
 	  <arg value="(.*)"/>
 	  <classpath>

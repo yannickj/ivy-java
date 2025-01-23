@@ -54,7 +54,7 @@ class ProxyMaster {
     } catch ( PatternSyntaxException res ) {
       res.printStackTrace();
       System.out.println("Regular Expression bug in Ivy source code ... bailing out");
-      throw new RuntimeException();
+      System.exit(-1);
     }
   } 
 
@@ -78,7 +78,7 @@ class ProxyMaster {
         servicePort = Integer.parseInt(s=opt.getOptarg());
       } catch (NumberFormatException nfe) {
         System.out.println("Invalid port number: " + s );
-	throw new RuntimeException();
+	System.exit(-1);
       }
       break;
     case 'h':
@@ -138,7 +138,7 @@ class ProxyMaster {
       } catch (IOException ioe) {
 	traceDebug("Subreader exception ...");
 	ioe.printStackTrace();
-	throw new RuntimeException();
+	System.exit(-1);
       }
       traceDebug("Subreader Thread stopped");
       System.out.println("ProxyClient on "+hostname+", bus "+busDomain+" disconnected");

@@ -47,11 +47,9 @@ public class IvyDaemon implements Runnable, IvyApplicationListener  {
 
   private ServerSocket serviceSocket;
   private static boolean debug = (System.getProperty("IVY_DEBUG")!=null) ;
-  private Thread daemonThread;// volatile to ensure the quick communication
+  private Thread daemonThread;
   private volatile boolean keeprunning = false ;// volatile to ensure the quick communication
   private Ivy bus;
-  private ExecutorService pool = null;
-  private static volatile int serial = 0;
 
   public static final int DEFAULT_SERVICE_PORT = 3456 ;
   public static final String DEFAULTNAME = "IvyDaemon";
@@ -104,9 +102,8 @@ public class IvyDaemon implements Runnable, IvyApplicationListener  {
     this.bus=bus;
     bus.addApplicationListener(this);
     serviceSocket = new ServerSocket(servicePort) ;
-    pool = Executors.newCachedThreadPool();
     keeprunning = true ;
-    pool.execute(this);
+    Thread.startVirtualThread(this);
   }
 
 
@@ -114,6 +111,7 @@ public class IvyDaemon implements Runnable, IvyApplicationListener  {
    * the service socket reader. 
    * it could be a thread, but as long as we've got one ....
    */
+  @Override
   public void run() {
     daemonThread = Thread.currentThread();
     daemonThread.setName("Ivy Daemon tool thread");
@@ -128,19 +126,14 @@ public class IvyDaemon implements Runnable, IvyApplicationListener  {
     }
     System.out.println("outta here");
     traceDebug("Thread stopped");
-    pool.shutdown();
   }
 
-  class SubReader implements Runnable {
+  class SubReader {
     BufferedReader in;
-
     SubReader(Socket socket) throws IOException {
       in=new BufferedReader(new InputStreamReader(socket.getInputStream()));
-      // setName("Subreader "+serial++);
-      pool.execute(SubReader.this);
-    }
+      Thread.startVirtualThread( () -> {
 
-    public void run() {
       traceDebug("Subreader Thread started");
       try {
 	while (true) {
@@ -156,18 +149,16 @@ public class IvyDaemon implements Runnable, IvyApplicationListener  {
       } catch (IOException ioe) {
         traceDebug("Subreader exception ...");
 	ioe.printStackTrace();
-	throw new RuntimeException();
+	System.exit(-1);
       }
       traceDebug("Subreader Thread stopped");
       try {
 	in.close();
-      } catch (IOException ioe) {
-	// do nothing
-      }
-      pool.shutdown();
+      } catch (IOException _) { }
       bus.stop();
       System.exit(0);
-    }
+    } );
+  }
   }
 
   public void connect( IvyClient client ) { }

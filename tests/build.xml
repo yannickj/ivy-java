@@ -17,7 +17,7 @@
 
   <path id="testivy-jars">
       <pathelement location="${ivy.home}/build/classes/"/>
-      <pathelement location="/opt/local/share/java/java-getopt-1.0.14.jar"/>
+      <pathelement location="/usr/share/java/gnu-getopt-1.0.14.jar"/>
   </path>
  <property name="testivy-jars" refid="testivy-jars"/>
 

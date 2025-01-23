@@ -16,6 +16,8 @@
  *</pre>
  *
  *  CHANGELOG:
+ *  1.2.19
+ *    - move from ThreadPool to Virtual Threads. Tests passed successfully !
  *  1.2.18
  *    - patch G.Alligier, it all passes lotsa tests !
  *    - disable ipv6 (because you know ...)
@@ -152,6 +154,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
@@ -170,7 +173,7 @@ public class Ivy implements Runnable {
    * the library version, useful for development purposes only, when java is
    * invoked with -DIVY_DEBUG
    */
-  private  static final String LIBVERSION = "1.2.18";
+  private  static final String LIBVERSION = "1.2.19";
 
   /*
    * private fields
@@ -179,7 +182,7 @@ public class Ivy implements Runnable {
   static final int TIMEOUTLENGTH = 1000;
 
 
-  private String appName;
+  private final String appName;
   private int applicationPort; /* Application port number */
   private String ready_message = null;
   private boolean doProtectNewlines = false;
@@ -188,34 +191,28 @@ public class Ivy implements Runnable {
   private Object lockApp = new Object();
   private boolean debug;
   private ServerSocket app;
-  private Collection<IvyWatcher> watchers = new ArrayList<IvyWatcher>();
+  private Collection<IvyWatcher> watchers = new ArrayList<>();
   private volatile boolean keeprunning = false;
   private Thread serverThread = null;
 
-  private Map<Integer, IvyClient> clients = Collections.synchronizedMap(new HashMap<Integer, IvyClient>());
-  private Map<Integer, IvyClient> half = Collections.synchronizedMap(new HashMap<Integer, IvyClient>());
+  private Map<Integer, IvyClient> clients = Collections.synchronizedMap(new HashMap<>());
+  private Map<Integer, IvyClient> half = Collections.synchronizedMap(new HashMap<>());
 
-  private Vector<IvyApplicationListener> ivyApplicationListenerList = new Vector<IvyApplicationListener>();
-  private Vector<IvyBindListener> ivyBindListenerList = new Vector<IvyBindListener>();
-  private Vector<Thread> sendThreads = new Vector<Thread>();
+  private Vector<IvyApplicationListener> ivyApplicationListenerList = new Vector<>();
+  private Vector<IvyBindListener> ivyBindListenerList = new Vector<>();
   private String[] filter = null;
   private boolean stopped = true;
-  // private boolean starting = false;
-  private volatile int nbThreads = 0;
-  private Object readyToSend = new Object();
   private boolean doSendToSelf = false;
-  private ExecutorService pool = null;
 
   // FIXME should not be static ? (findbugs)
   private static int serial = 0;
-  private int myserial = serial++;
-  private static long current = System.currentTimeMillis();
-  private static java.util.Random generator = new java.util.Random(current * (serial + 1));
+  private int myserial = createSerial();
   private String watcherId = null;
   private static Pattern rangeRE; // tcp range min and max
   private static Pattern bounded;
 
   private static final Object lock = new Object();
+  private static final int createSerial() { return serial++ ; }
 
   /**
    * Readies the structures for the software bus connexion.
@@ -354,7 +351,6 @@ public class Ivy implements Runnable {
   public final void start(final String domainbus) throws IvyException {
     if (!stopped) throw new IvyException("cannot start a bus that's already started");
     System.setProperty("java.net.preferIPv4Stack" , "true");
-    pool = Executors.newCachedThreadPool();
     stopped = false;
     String db = domainbus;
     if (db == null) db = Domain.getDomain(null);
@@ -399,29 +395,16 @@ public class Ivy implements Runnable {
     // readies the rendezvous : an IvyWatcher (thread) per domain bus
     for (Domain dom: d) watchers.add(new IvyWatcher(this , dom.getDomainaddr() , dom.getPort()));
     keeprunning = true;
-    pool.execute(this);
+    Thread.startVirtualThread(this);
 
     // sends the broadcasts and listen to incoming connexions
     for (IvyWatcher iw: watchers) iw.doStart();
-  }
-
-  private void waitForRemote(String s) {
-    try {
-      while (nbThreads > 0) {
-	  traceDebug("I'm waiting before "+s+", a connecting tread is in progress");
-	  Thread.sleep(GRACEDELAY);
-	  traceDebug("I'm done waiting before "+s);
-      }
-    } catch (InterruptedException ie) {
-      // should not happen, and it's not a problem anyway
-    }
   }
 
   /**
    * disconnects from the Ivy bus.
    */
   public final void stop() {
-    waitForRemote("stopping");
     if (stopped) return;
     stopped = true;
     keeprunning = false;
@@ -441,7 +424,6 @@ public class Ivy implements Runnable {
     } catch (IOException e) {
      traceDebug("IOexception Stop ");
     }
-    pool.shutdown();
     traceDebug("end stopping");
   }
 
@@ -499,7 +481,6 @@ public class Ivy implements Runnable {
    */
   synchronized public final int sendMsg(final String message) throws IvyException {
     int count = 0;
-    waitForRemote("sending");
     synchronized (lock) {
       traceDebug("sending "+message);
       String msg = message;
@@ -754,22 +735,22 @@ public class Ivy implements Runnable {
 
   /* invokes the application listeners upon arrival of a new Ivy client */
   protected synchronized final void clientConnects(final IvyClient client){
-    for (IvyApplicationListener ial : ivyApplicationListenerList) ial.connect(client);
+      ivyApplicationListenerList.forEach((ial) -> ial.connect(client));
   }
 
   /* invokes the application listeners upon the departure of an Ivy client */
   protected synchronized final void clientDisconnects(final IvyClient client){
-    for (IvyApplicationListener ial : ivyApplicationListenerList) ial.disconnect(client);
+      ivyApplicationListenerList.forEach((ial) -> ial.disconnect(client));
   }
 
   /* invokes the bind listeners */
   protected final void regexpReceived(final IvyClient client , final int id , final String sregexp){
-    for (IvyBindListener ibl : ivyBindListenerList) ibl.bindPerformed(client , id , sregexp);
+      ivyBindListenerList.forEach((ibl) -> ibl.bindPerformed(client , id , sregexp));
   }
 
   /* invokes the bind listeners */
   protected final void regexpDeleted(final IvyClient client , final int id , final String sregexp){
-    for (IvyBindListener ibl : ivyBindListenerList) ibl.unbindPerformed(client , id , sregexp);
+      ivyBindListenerList.forEach((ibl) -> ibl.unbindPerformed(client , id , sregexp));
   }
 
   /*
@@ -777,12 +758,12 @@ public class Ivy implements Runnable {
    * then stops
    */
   protected synchronized final void dieReceived(final IvyClient client , final int id , final String message){
-    for (IvyApplicationListener ial : ivyApplicationListenerList) ial.die(client , id , message);
+      ivyApplicationListenerList.forEach((ial) -> ial.die(client , id , message));
   }
 
   /* invokes the direct message callbacks */
   protected synchronized final void directMessage(final IvyClient client , final int id , final String msgarg ){
-    for (IvyApplicationListener ial : ivyApplicationListenerList) ial.directMessage(client , id, msgarg);
+      ivyApplicationListenerList.forEach((ial) -> ial.directMessage(client , id, msgarg));
   }
 
   /**
@@ -790,7 +771,7 @@ public class Ivy implements Runnable {
    * @return a collection of IvyClients
    */
   public final Collection<IvyClient> getIvyClients() {
-    Collection<IvyClient> v = new ArrayList<IvyClient>();
+    Collection<IvyClient> v = new ArrayList<>();
     synchronized (clients) {
       for (IvyClient ic : clients.values() ) if (ic != null) v.add(ic);
     }
@@ -821,16 +802,13 @@ public class Ivy implements Runnable {
    * @since 1.2.8
    * @return returns a string wich is meant to be noisy enough to be unique
    */
-  public final String getWBUId() {
-    return "ID<" + appName + myserial + ":" + nextId() + ":" + generator.nextInt() + ">";
-  }
+  public final String getWBUId() { return UUID.randomUUID().toString(); }
 
 
-  @Override public String toString() {
+  @Override
+  public String toString() {
     return "bus <"+appName+">[port:"+applicationPort+",serial:"+myserial+"]";
   }
-
-  private synchronized long nextId() { return current++; }
 
   /////////////////////////////////////////////////////////////////:
   //
@@ -844,9 +822,8 @@ public class Ivy implements Runnable {
   protected boolean createIvyClient(Socket s , int port, boolean domachin) throws IOException {
     IvyClient i = new IvyClient(this , s , port , domachin);
     try {
-      pool.execute(i);
+      Thread.startVirtualThread(i);
     } catch (RejectedExecutionException ree) {
-      // in another thread, the pool is shut down
       traceDebug("in another thread, the pool is shut down");
       return false;
     }
@@ -885,7 +862,7 @@ public class Ivy implements Runnable {
     }
   }
 
-  protected synchronized void addHalf(IvyClient c) {
+  protected synchronized final void addHalf(IvyClient c) {
     synchronized (half) { half.put(c.getClientKey() , c); }
     traceDebug("added " + c + " in half: " + getClientNames(half));
   }
@@ -936,7 +913,7 @@ public class Ivy implements Runnable {
           traceDebug("Error IvyServer exception:  "  +  e.getMessage());
           System.out.println("Ivy server socket reader caught an exception " + e.getMessage());
           System.out.println("this is probably a bug in your JVM ! (e.g. blackdown jdk1.1.8 linux)");
-          throw new RuntimeException();
+	  System.exit(-1);
         } else {
           traceDebug("my server socket has been closed");
         }
@@ -952,21 +929,6 @@ public class Ivy implements Runnable {
   String getWatcherId() { return watcherId; }
   int getBufferSize() { return bufferSize; }
   int getSerial() { return myserial; }
-  ExecutorService getPool() { return pool; }
-
-  protected void pushThread(String reason) {
-    synchronized(readyToSend) {
-      // nbThreads++;
-      //System.out.println("DEBUG PUSH "+this+" -- threads: "+nbThreads + "; reason: "+reason);
-    }
-  }
-
-  protected void popThread(String reason) {
-    synchronized(readyToSend) {
-      // nbThreads--; 
-      //System.out.println("DEBUG POP "+this+" -- threads: "+nbThreads + "reason: "+reason);
-    }
-  }
 
   private void traceDebug(String s){
     if (debug) System.out.println("-->Ivy[" + myserial + "]<-- " + s);

@@ -1,4 +1,4 @@
-/**
+/*
  * the local handle to a peer on the bus, a Thread is associated to each
  * instance, performing the socket handling, the protocol parsing, and the
  * callback running.
@@ -12,6 +12,8 @@
  * created for each remote client.
  *
  *  CHANGELOG:
+ *  1.2.19
+ *    - in newParseMsg, get rid of String tokenizer which is inherently thread-unsafe, in favor of Pattern Matching.
  *  1.2.17
  *    - fixes a synchronization issue in sendMsg
  *  1.2.16
@@ -125,6 +127,8 @@ public class IvyClient implements Runnable {
   private boolean discCallbackPerformed = false;
   private String remoteHostname="unresolved";
 
+  private static final int createSerial() { return clientSerial++; }
+
   // protected variables
   String appName="none";
   Map <Integer,Pattern>regexps = Collections.synchronizedMap(new HashMap<Integer,Pattern>());
@@ -137,7 +141,7 @@ public class IvyClient implements Runnable {
   IvyClient() { } // required for SelfIvyClient FIXME ?!
 
   IvyClient(Ivy bus, Socket socket,int remotePort,boolean incoming) throws IOException {
-    synchronized(lock) { clientKey=clientSerial++; }
+    synchronized(lock) { clientKey=createSerial(); }
     this.bus = bus;
     this.remotePort = remotePort;
     this.incoming = incoming;
@@ -234,9 +238,7 @@ public class IvyClient implements Runnable {
    * asks the remote client to leave the bus.
    * @param  message the message that will be carried
    */
-  public void sendDie(String message) {
-    sendString(Protocol.DIE,0,message);
-  }
+  public void sendDie(String message) { sendString(Protocol.DIE,0,message); }
 
   /**
    * triggers a Ping, and executes the callback
@@ -266,12 +268,12 @@ public class IvyClient implements Runnable {
   protected int sendMsg(String message) {
     int count = 0;
     synchronized (regexps) {
-      for (Integer key : regexps.keySet()) {
-	Pattern regexp = regexps.get(key);
+      for (var r : regexps.entrySet()) {
+	Pattern regexp = regexps.get(r.getKey());
 	Matcher m = regexp.matcher(message);
 	if (m.matches())  {
 	  count++; // match
-	  sendResult(Protocol.MSG,key,m);
+	  sendResult(Protocol.MSG,r.getKey(),m);
 	}
       }
     }
@@ -318,6 +320,7 @@ public class IvyClient implements Runnable {
   /*
    * the code of the thread handling the incoming messages.
    */
+  @Override
   public void run() {
     traceDebug("Thread started");
     Thread thisThread = Thread.currentThread();
@@ -421,6 +424,7 @@ public class IvyClient implements Runnable {
     }
   }
 
+  /*
   private String dumpHex(String s) {
     byte[] b = s.getBytes();
     StringBuffer outDump = new StringBuffer();
@@ -435,7 +439,9 @@ public class IvyClient implements Runnable {
     outDump.append(zu);
     return outDump.toString();
   }
+  */
 
+  /*
   private String dumpMsg(String s) {
     StringBuffer deb = new StringBuffer(" \""+s+"\" "+s.length()+" cars, ");
     for (int i=0;i<s.length();i++) {
@@ -447,121 +453,78 @@ public class IvyClient implements Runnable {
     }
     return deb.toString();
   }
+  */
+
+  public static final Pattern pat = Pattern.compile("^(\\d+) (\\d+)"+Protocol.STARTARG+"(.*)");
 
   protected boolean newParseMsg(String s) throws IvyException {
     if (s==null) throw new IvyException("null string to parse in protocol");
-    byte[] b = s.getBytes();
-    int from=0,to=0;
-    Protocol msgType;
-    Integer msgId;
-    while ((to<b.length)&&(b[to]!=' ')) to++;
-    // return false au lieu de throw
-    if (to>=b.length) {
+    Matcher m = pat.matcher(s);
+    if (!m.matches()) {
       System.out.println("Ivy protocol error from "+appName);
       return false;
     }
-    msgType = Protocol.fromString(s.substring(from,to));
-    from=to+1;
-    while ((to<b.length)&&(b[to]!=2)) to++;
-    if (to>=b.length) {
-      System.out.println("Ivy protocol error from "+appName);
-      return false;
-    }
-    try {
-      msgId = Integer.valueOf(s.substring(from,to));
-    } catch (NumberFormatException nfe) {
-      System.out.println("Ivy protocol error from "+appName+" "+s.substring(from,to)+" is not a number");
-      return false;
-    }
-    from=to+1;
+    Protocol msgType = Protocol.fromString(m.group(1));
+    String msgIdS = m.group(2);
+    Integer msgIdI = Integer.parseInt(msgIdS);
+    String arg = m.group(3);
     switch (msgType) {
-      case DIE:
+      case DIE -> {
 	traceDebug("received die Message from " + appName);
-	// first, I'm not a first class IvyClient any more
 	bus.removeClient(this);
-	// invokes the die applicationListeners
-	String message=s.substring(from,b.length);
-	bus.dieReceived(this,msgId.intValue(),message);
-	// makes the bus die
+	bus.dieReceived(this,msgIdI,arg);
 	bus.stop();
-	try {
-	  close(false);
-	} catch (IOException ioe) {
-	  throw new IvyException(ioe.getMessage());
-	}
-	break;
-      case BYE:
-	// the peer quits
+	try { close(false); } catch (IOException ioe) { throw new IvyException(ioe.getMessage()); }
+      }
+      case BYE -> {
+	// the peer quits ,I'm not a first class IvyClient any more, I unregister from the client strucutre, and invoke the die applicationListeners
 	traceDebug("received bye Message from "+appName);
-	// first, I'm not a first class IvyClient any more
 	bus.removeClient(this);
-	// invokes the die applicationListeners
 	if (!discCallbackPerformed) bus.clientDisconnects(this);
 	discCallbackPerformed=true;
-	try {
-	  close(false);
-	} catch (IOException ioe) {
-	  throw new IvyException(ioe.getMessage());
-	}
-	break;
-      case PONG:
-        PCHget(msgId);
-	break;
-      case PING:
-	sendString(Protocol.PONG,msgId.intValue(),"");
-	break;
-      case ADDREGEXP:
-	String regexp=s.substring(from,b.length);
-	if ( bus.checkRegexp(regexp) ) {
+	try { close(false); } catch (IOException ioe) { throw new IvyException(ioe.getMessage()); }
+      }
+      case PONG -> PCHget(msgIdI);
+      case PING -> sendString(Protocol.PONG,msgIdI,"");
+      case ADDREGEXP -> {
+	if ( bus.checkRegexp(arg) ) {
 	  try {
-	    regexps.put(msgId,Pattern.compile(regexp,Pattern.DOTALL));
-	    regexpsText.put(msgId,regexp);
-	    bus.regexpReceived(this,msgId.intValue(),regexp);
+	    regexps.put(msgIdI,Pattern.compile(arg,Pattern.DOTALL));
+	    regexpsText.put(msgIdI,arg);
+	    bus.regexpReceived(this,msgIdI,arg);
 	  } catch (PatternSyntaxException e) {
 	    // the remote client sent an invalid regexp !
-	    traceDebug("invalid regexp sent by " +appName+" ("+regexp+"), I will ignore this regexp");
+	    traceDebug("invalid regexp sent by " +appName+" ("+arg+"), I will ignore this regexp");
 	    sendBuffer(Protocol.ERROR.value()+" "+e.toString());
 	  }
 	} else {
 	  // throw new IvyException("regexp Warning exp='"+regexp+"' can't match removing from "+appName);
-	  traceDebug("Warning "+appName+" subscribes to '"+regexp+"', it can't match our message filter");
-	  bus.regexpReceived(this,msgId.intValue(),regexp);
+	  traceDebug("Warning "+appName+" subscribes to '"+arg+"', it can't match our message filter");
+	  bus.regexpReceived(this,msgIdI,arg);
 	}
-	break;
-      case DELREGEXP:
-	regexps.remove(msgId);
-	String text=(String)regexpsText.remove(msgId);
-	bus.regexpDeleted(this,msgId.intValue(),text);
-	break;
-      case ENDREGEXP:
+      }
+      case DELREGEXP -> {
+	regexps.remove(msgIdI);
+	String text=(String)regexpsText.remove(msgIdI);
+	bus.regexpDeleted(this,msgIdI,text);
+      }
+      case ENDREGEXP -> {
 	bus.clientConnects(this);
 	String srm = bus.getReadyMessage();
 	if (srm!=null) sendMsg(srm);
-	break;
-      case MSG:
-	Vector <String>v = new Vector<String>();
-	while (to<b.length) {
-	  while ( (to<b.length) && (b[to]!=3) ) to++;
-	  if (to<b.length) {
-	    v.addElement(decode(s.substring(from,to)));
-	    to++;
-	    from=to;
-	  }
-	}
-	String[] tab = new String[v.size()];
-	int i=0;
-	for (String st: v) tab[i++]=st;
-	// for developpemnt purposes
+      }
+      case MSG -> {
+	String[] parms = arg.split("\u0003");
+	String[] tab = new String[parms.length];
+	for (int index=0; index<parms.length; index++) tab[index]=decode(parms[index]);
 	traceDebug(tab);
-	bus.getSelfIvyClient().callCallback(this,msgId,tab);
-	break;
-      case ERROR:
-	String error=s.substring(from,b.length);
-	traceDebug("Error msg "+msgId+" "+error);
-  	break;
-      case SCHIZOTOKEN: // aka BeginRegexp in other implementations, or MsgSync
-	appName=s.substring(from,b.length);
-	remotePort=msgId.intValue();
+	bus.getSelfIvyClient().callCallback(this,msgIdI,tab);
+      }
+      case ERROR -> traceDebug("Error msg "+msgIdS+" "+arg);
+      case SCHIZOTOKEN -> {
+	  // aka BeginRegexp in other implementations, or MsgSync
+	  appName=arg;
+	remotePort=msgIdI;
 	traceDebug("the peer sent his service port: "+remotePort);
 	if (incoming) {
 	  // incoming connexion, I wait for his token to send him mine ...
@@ -579,14 +542,12 @@ public class IvyClient implements Runnable {
 	  // I already have sent him a token
 	  bus.handShake(this);
 	}
-	break;
-      case DIRECTMSG: 
-	String direct=s.substring(from,b.length);
-	bus.directMessage( this, msgId.intValue(), direct );
-	break;
-      default:
-        System.out.println("protocol error from "+appName+", unknown message type "+msgType);
+      }
+      case DIRECTMSG -> bus.directMessage( this, msgIdI, arg );
+      default -> {
+        System.out.println("critical protocol error from "+appName+", unknown message type "+msgType);
 	return false;
+      }
     }
     return true;
   }

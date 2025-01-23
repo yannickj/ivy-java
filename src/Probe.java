@@ -159,7 +159,7 @@ public class Probe implements IvyApplicationListener, IvyMessageListener, IvyBin
     } catch ( PatternSyntaxException res ) {
       res.printStackTrace();
       System.out.println("Regular Expression bug in Ivy source code ... bailing out");
-      throw new RuntimeException();
+      System.exit(-1);
     }
   }
 
@@ -186,9 +186,6 @@ public class Probe implements IvyApplicationListener, IvyMessageListener, IvyBin
 	s=in.readLine();
 	if (s==null) break;
 	if (!parseCommand(s)) break;
-      } catch (NullPointerException e) {
-	// EOF triggered by a ^D, for instance
-	break;
       } catch (IOException e) {
 	// System input was closed
 	break;
