@@ -1,0 +1,31 @@
+<project default="run" basedir=".">
+
+  <!-- <property name="build.compiler" value="javac" /> -->
+  <property name="ivy.home" value=".." />
+  <property name="ivydomain" value="224:3456" />
+
+  <path id="testivy-jars">
+      <pathelement location="${ivy.home}/build/classes/"/>
+      <pathelement location="${ivy.home}/libs/java-getopt-1.0.14.jar"/>
+  </path>
+ <property name="testivy-jars" refid="testivy-jars"/>
+
+  <target name="run" depends="compile">
+    <echo message="runs the different examples ..." />
+    <java classpath="${testivy-jars}:classes" fork="true" classname="TOTO">
+	    <arg line="-b ${ivydomain}"/>
+    </java>
+  </target>
+
+  <target name="compile">
+    <mkdir dir="classes"/>
+    <javac classpath="${testivy-jars}"
+        debug="true"
+        deprecation="on"
+        destdir="classes"
+        includes="**/*.java"
+        optimize="on"
+        srcdir="."/>
+  </target>
+
+</project>
